@@ -45,8 +45,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
 target_link_libraries (tinygraphics PUBLIC glfw GLEW::GLEW opengl32 glm::glm-header-only)
 
-if (BUILD_EXE)
-  add_executable (app "${PROJECT_SOURCE_DIR}/src/testapp.cpp")
-  target_link_libraries (app PRIVATE tinygraphics)
+if (WITH_EXAMPLES)
+  add_subdirectory("examples")
 endif()
 

@@ -13,6 +13,13 @@ Shader::Shader(const std::string& filepath)
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+Shader::Shader(const std::string& vertexSource, const std::string& fragmentSource)
+{
+    _rendererID = CreateShader(vertexSource, fragmentSource);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 Shader::~Shader()
 {
     glDeleteProgram(_rendererID);

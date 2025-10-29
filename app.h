@@ -14,12 +14,13 @@
 struct WindowProperties
 {
     WindowProperties() = default;
-    WindowProperties(unsigned int w, unsigned int h, const char *title);
+    WindowProperties(unsigned int w, unsigned int h, const char *title, bool maximized);
     ~WindowProperties() = default;
 
-    unsigned int _width  = 960;
-    unsigned int _height = 540;
-    std::string  _title  = "DEBUG";
+    unsigned int _width     = 960u;
+    unsigned int _height    = 540u;
+    std::string  _title     = "DEBUG";
+    bool         _maximized = false;
 };
 
 // -----------------------------------------------------------------------------

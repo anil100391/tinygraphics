@@ -134,10 +134,12 @@ void WindowResizeCallback(GLFWwindow *window, int width, int height)
 // -----------------------------------------------------------------------------
 WindowProperties::WindowProperties( unsigned int w,
                                     unsigned int h,
-                                    const char *title )
+                                    const char *title,
+                                    bool maximized )
     : _width(w),
       _height(h),
-      _title(title)
+      _title(title),
+      _maximized(maximized)
 {
 }
 
@@ -179,6 +181,12 @@ Application::Application( const WindowProperties &wprops )
     glfwSetMouseButtonCallback( _window, MouseButtonCallback );
     glfwSetScrollCallback( _window, MouseScrollCallback );
     glfwSetFramebufferSizeCallback( _window, WindowResizeCallback );
+
+    if ( wprops._maximized )
+    {
+        glfwMaximizeWindow( _window );
+    }
+
 }
 
 // -----------------------------------------------------------------------------
@@ -224,6 +232,7 @@ bool Application::OnEvent( Event &evt )
 {
     return true;
 }
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void Application::Run()
