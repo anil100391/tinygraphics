@@ -32,7 +32,9 @@ void VertexArray::Unbind() const
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout &layout)
+void VertexArray::AddBuffer( const VertexBuffer &vb,
+                             const VertexBufferLayout &layout,
+                             bool instance )
 {
     Bind();
     vb.Bind();
@@ -41,9 +43,16 @@ void VertexArray::AddBuffer(const VertexBuffer& vb, const VertexBufferLayout &la
     for ( unsigned int ii = 0; ii < elements.size(); ++ii )
     {
         const auto& element = elements[ii];
-        glEnableVertexAttribArray(ii);
-        glVertexAttribPointer(ii, element.count, element.type, element.normalized,
+        glEnableVertexAttribArray(_numAttributes);
+        glVertexAttribPointer(_numAttributes, element.count, element.type, element.normalized,
                 layout.GetStride(), (const void*)(uint64_t)offset);
         offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
+
+        if ( instance )
+        {
+            glVertexAttribDivisor( _numAttributes, 1 );
+        }
+
+        ++_numAttributes;
     }
 }

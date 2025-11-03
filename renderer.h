@@ -32,7 +32,26 @@ public:
     };
 
     void Clear() const;
-    void Draw(const VertexArray& va, const IndexBuffer &ib, const Shader &shader, DRAW_MODE dm = TRIANGLES) const;
+
+    void Draw( const VertexArray& va,
+               const IndexBuffer &ib,
+               const Shader &shader,
+               DRAW_MODE dm = TRIANGLES ) const;
+
+    void DrawInstanced( const VertexArray& va,
+                        const IndexBuffer &ib,
+                        const Shader &shader,
+                        unsigned int count,
+                        DRAW_MODE dm = TRIANGLES ) const;
+
+private:
+  
+    GLenum GetGLDrawMode( DRAW_MODE dm ) const;
+    void Draw( const VertexArray& va,
+               const IndexBuffer &ib,
+               const Shader &shader,
+               unsigned int instanceCount,
+               DRAW_MODE dm ) const;
 };
 
 #endif // _renderer_h_
