@@ -6,9 +6,31 @@ set (CMAKE_CXX_STANDARD 20)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
+# find_package(GLEW REQUIRED)
+# find_package(glfw3 CONFIG REQUIRED)
+
+include(FetchContent)
+
+# glm
+FetchContent_Declare(glm
+  GIT_REPOSITORY https://github.com/g-truc/glm.git)
+  FIND_PACKAGE_ARGS NAMES glm)
+
+FetchContent_MakeAvailable(glm)
+
+# glew
+FetchContent_Declare(glew
+  GIT_REPOSITORY https://github.com/nigels-com/glew.git)
+  FIND_PACKAGE_ARGS NAMES GLEW)
+
+FetchContent_MakeAvailable(GLEW)
+
+# glfw
+FetchContent_Declare(glfw
+  GIT_REPOSITORY https://github.com/glfw/glfw.git)
+  FIND_PACKAGE_ARGS NAMES glfw3)
+
+FetchContent_MakeAvailable(glfw)
 
 if (ENABLE_UTILS)
   find_package(assimp CONFIG REQUIRED)
@@ -43,9 +65,8 @@ add_compile_options(-D_CRT_SECURE_NO_WARNINGS)
 include_directories("${PROJECT_SOURCE_DIR}")
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
-target_link_libraries (tinygraphics PUBLIC glfw GLEW::GLEW opengl32 glm::glm-header-only)
+target_link_libraries (tinygraphics PUBLIC glfw glew opengl32 glm::glm-header-only)
 
 if (WITH_EXAMPLES)
   add_subdirectory("examples")
 endif()
-
