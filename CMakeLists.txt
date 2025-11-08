@@ -13,21 +13,25 @@ include(FetchContent)
 
 # glm
 FetchContent_Declare(glm
-  GIT_REPOSITORY https://github.com/g-truc/glm.git)
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
   FIND_PACKAGE_ARGS NAMES glm)
 
 FetchContent_MakeAvailable(glm)
 
 # glew
 FetchContent_Declare(glew
-  GIT_REPOSITORY https://github.com/nigels-com/glew.git)
+  URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
   FIND_PACKAGE_ARGS NAMES GLEW)
 
-FetchContent_MakeAvailable(GLEW)
+FetchContent_GetProperties(glew)
+if (NOT glew_POPULATED)
+  FetchContent_Populate(glew)
+  add_subdirectory(${glew_SOURCE_DIR}/build/cmake ${glew_BINARY_DIR})
+endif()
 
 # glfw
 FetchContent_Declare(glfw
-  GIT_REPOSITORY https://github.com/glfw/glfw.git)
+  GIT_REPOSITORY https://github.com/glfw/glfw.git
   FIND_PACKAGE_ARGS NAMES glfw3)
 
 FetchContent_MakeAvailable(glfw)
@@ -65,7 +69,7 @@ add_compile_options(-D_CRT_SECURE_NO_WARNINGS)
 include_directories("${PROJECT_SOURCE_DIR}")
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
-target_link_libraries (tinygraphics PUBLIC glfw glew opengl32 glm::glm-header-only)
+target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm-header-only)
 
 if (WITH_EXAMPLES)
   add_subdirectory("examples")
