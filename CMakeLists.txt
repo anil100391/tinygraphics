@@ -67,6 +67,9 @@ add_compile_options(-D_USE_MATH_DEFINES)
 add_compile_options(-D_CRT_SECURE_NO_WARNINGS)
 
 include_directories("${PROJECT_SOURCE_DIR}")
+include_directories("${glew_SOURCE_DIR}/include")
+include_directories("${glfw_SOURCE_DIR}/include")
+include_directories("${glm_SOURCE_DIR}")
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
 target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm-header-only)
