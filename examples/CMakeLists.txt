@@ -6,3 +6,6 @@ target_link_libraries(simpleShader PRIVATE tinygraphics)
 
 add_executable(instances "instances.cpp")
 target_link_libraries(instances PRIVATE tinygraphics)
+
+add_executable(light "light.cpp")
+target_link_libraries(light PRIVATE tinygraphics)
