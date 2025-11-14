@@ -104,7 +104,7 @@ TestsApplication::TestsApplication() : Application( {1920, 1080, "tinygraphics",
         "{\n"
         "    vec3 lightColor = vec3(1.0);\n"
         "    // AMBIENT\n"
-        "    float ambientFactor = 0.05;\n"
+        "    float ambientFactor = 0.02;\n"
         "    vec3 ambient = ambientFactor * lightColor;\n"
 
         "    // DIFFUSE\n"
@@ -134,7 +134,7 @@ TestsApplication::TestsApplication() : Application( {1920, 1080, "tinygraphics",
     _ibo = std::make_unique<IndexBuffer>(_indices.data(), static_cast<unsigned int>(_indices.size()));
     _shader = std::make_unique<Shader>(vertexShader, fragmentShader);
 
-    _camera.SetPosition( glm::vec3( -1.0f, -1.0f, 7.0f ) );
+    _camera.SetPosition( glm::vec3( -1.0f, -1.0f, 5.0f ) );
     _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
     _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
 }
@@ -186,7 +186,11 @@ void TestsApplication::Update()
     GetCursorPosition( x, y );
     _shader->SetUniform2f( "u_MousePos", static_cast<float>(x), static_cast<float>(y) );
     _shader->SetUniform3f( "u_Color", 1.0f, 1.0f, 1.0f );
-    _shader->SetUniform3f( "u_LightPos", -2.0f, -2.0f, 3.0f );
+
+    auto time = GetCurrentTime();
+    float xl = -4.0f * std::sin( time * 0.25f );
+    float zl = -4.0f * std::cos( time * 0.25f );
+    _shader->SetUniform3f( "u_LightPos", xl, 0.0f, zl );
 
     glm::mat4 model = glm::mat4( 1.0f );
     glm::mat4 view = _camera.GetViewMatrix();
