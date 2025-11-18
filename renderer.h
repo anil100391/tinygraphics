@@ -2,7 +2,6 @@
 #define _renderer_h_
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 #include <vertexarray.h>
 #include <indexbuffer.h>

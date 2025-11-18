@@ -7,6 +7,9 @@
 #include <events/mouseevent.h>
 #include <events/windowevent.h>
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void KeyCallback( GLFWwindow *window,
