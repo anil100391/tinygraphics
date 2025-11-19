@@ -82,3 +82,13 @@ install(TARGETS tinygraphics
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION include/tinygraphics
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN ".git" EXCLUDE
+        PATTERN "CMakeLists.txt" EXCLUDE
+        PATTERN "src" EXCLUDE
+        PATTERN "examples" EXCLUDE
+        PATTERN "build" EXCLUDE)
