@@ -14,14 +14,22 @@ include(FetchContent)
 # glm
 FetchContent_Declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
-  FIND_PACKAGE_ARGS NAMES glm)
+  FIND_PACKAGE_ARGS CONFIG NAMES glm)
+
+if (NOT glm_FOUND)
+    message(STATUS "glm not found... downloading and building")
+endif()
 
 FetchContent_MakeAvailable(glm)
 
 # glew
 FetchContent_Declare(glew
   URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
-  FIND_PACKAGE_ARGS NAMES GLEW)
+  FIND_PACKAGE_ARGS CONFIG NAMES GLEW)
+
+if (NOT glew_FOUND)
+    message(STATUS "glew not found... downloading and building")
+endif()
 
 FetchContent_GetProperties(glew)
 if (NOT glew_POPULATED)
@@ -32,7 +40,11 @@ endif()
 # glfw
 FetchContent_Declare(glfw
   GIT_REPOSITORY https://github.com/glfw/glfw.git
-  FIND_PACKAGE_ARGS NAMES glfw3)
+  FIND_PACKAGE_ARGS CONFIG NAMES glfw3)
+
+if (NOT glfw_FOUND)
+    message(STATUS "glfw not found... downloading and building")
+endif()
 
 FetchContent_MakeAvailable(glfw)
 
