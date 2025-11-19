@@ -77,3 +77,8 @@ target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm-head
 if (WITH_EXAMPLES)
   add_subdirectory("examples")
 endif()
+
+install(TARGETS tinygraphics
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
