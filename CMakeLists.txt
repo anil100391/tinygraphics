@@ -92,8 +92,7 @@ endif()
 
 install(TARGETS tinygraphics
         ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
+        LIBRARY DESTINATION lib)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION include/tinygraphics
