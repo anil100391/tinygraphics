@@ -43,16 +43,5 @@
       "name": "build-debug",
       "configurePreset": "ninja-debug"
     }
-  ],
-
-  "installPresets": [
-    {
-      "name": "install-release",
-      "configurePreset": "ninja-release"
-    },
-    {
-      "name": "install-debug",
-      "configurePreset": "ninja-debug"
-    }
   ]
 }
