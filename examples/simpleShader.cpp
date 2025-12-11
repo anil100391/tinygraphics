@@ -73,26 +73,44 @@ TestsApplication::TestsApplication() : Application( {1920, 1080, "tinygraphics",
         "}"
     ;
 
+    // "Plasma" by @XorDev
+    // X Post: x.com/XorDev/status/1894123951401378051
+
     std::string fragmentShader =
         "#version 330 core\n"
         "uniform vec2 u_Size;\n"
         "uniform vec2 u_MousePos;\n"
+        "uniform float u_Time;\n"
+
+        "vec4 mainImage()\n"
+        "{\n"
+        "    // Centered, ratio corrected, coordinates\n"
+        "    vec2 p = (2.0 * gl_FragCoord.xy - u_Size.xy) / min(u_Size.x, u_Size.y);\n"
+
+        "    // Z depth\n"
+        "    vec2 z = vec2(u_MousePos.xy / u_Size.xy);\n"
+
+        "    // Fluid coordinates\n"
+        "    vec2 f = p * (z += 4.0 - 4.0 * abs(0.7 - dot(p, p)));\n"
+
+        "    // Clear frag color and loop 8 times\n"
+        "    vec4 O;\n"
+        "    vec2 i = vec2(0.0);\n"
+        "    for ( O *= 0.0; i.y++ < 8.0;\n"
+        "        // Set color waves and line brightness\n"
+        "        O += (sin(f) + 1.0).xyyx * abs(f.x - f.y))\n"
+        "        // Add fluid waves\n"
+        "        f += cos(f.yx * i.y + i + u_Time) / i.y + 0.7;\n"
+
+        "    // Tonemap, fade edges and color gradient\n"
+        "    O = tanh(7.0 * exp(z.x - 4.0 - p.y * vec4(-1.0, 1.0, 2.0, 0.0)) / O);\n"
+        "    return O;\n"
+        "}\n"
+
         "void main()\n"
         "{\n"
-        "    float minSpan = min(u_Size.x, u_Size.y);\n"
-        "    float normX = gl_FragCoord.x / minSpan;\n"
-        "    float normY = gl_FragCoord.y / minSpan;\n"
-        "    float cx = u_MousePos.x / minSpan;\n"
-        "    float cy = (u_Size.y - u_MousePos.y) / minSpan;\n"
-        "    float dx = cx - normX;\n"
-        "    float dy = cy - normY;\n"
-        "    float dist = sqrt(dx * dx + dy * dy);\n"
-        "    dist = clamp(dist, 0.0, 1.0);\n"
-        "    dist = 1.0 - dist;\n"
-        "    dist = dist * dist * dist;\n"
-        "    gl_FragColor = vec4(vec3(dist), 1.0);\n"
-        "}"
-    ;
+        "    gl_FragColor = mainImage();\n"
+        "}";
 
     float d = -1.0f;
     std::vector<float> positions = { -d, -d,
@@ -157,6 +175,7 @@ void TestsApplication::Update()
     double x, y;
     GetCursorPosition( x, y );
     _shader->SetUniform2f( "u_MousePos", static_cast<float>(x), static_cast<float>(y) );
+    _shader->SetUniform1f( "u_Time", GetCurrentTime() );
 
     // draw
     renderer.Draw( *_vao, *_ibo, *_shader );
