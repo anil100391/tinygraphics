@@ -1,52 +1,17 @@
-cmake_minimum_required(VERSION 3.13)
-project(tinygraphics CXX)
+cmake_minimum_required(VERSION 3.26)
+project(tinygraphics VERSION 0.1 LANGUAGES CXX)
 set (CMAKE_CXX_STANDARD 20)
 
 # for intellisense
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# opengl
 find_package(OpenGL REQUIRED)
-# find_package(GLEW REQUIRED)
-# find_package(glfw3 CONFIG REQUIRED)
 
-include(FetchContent)
-
-# glm
-FetchContent_Declare(glm
-  GIT_REPOSITORY https://github.com/g-truc/glm.git
-  FIND_PACKAGE_ARGS CONFIG NAMES glm)
-
-if (NOT glm_FOUND)
-    message(STATUS "glm not found... downloading and building")
-endif()
-
-FetchContent_MakeAvailable(glm)
-
-# glew
-FetchContent_Declare(glew
-  URL https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.tgz
-  FIND_PACKAGE_ARGS CONFIG NAMES GLEW)
-
-if (NOT glew_FOUND)
-    message(STATUS "glew not found... downloading and building")
-endif()
-
-FetchContent_GetProperties(glew)
-if (NOT glew_POPULATED)
-  FetchContent_Populate(glew)
-  add_subdirectory(${glew_SOURCE_DIR}/build/cmake ${glew_BINARY_DIR})
-endif()
-
-# glfw
-FetchContent_Declare(glfw
-  GIT_REPOSITORY https://github.com/glfw/glfw.git
-  FIND_PACKAGE_ARGS CONFIG NAMES glfw3)
-
-if (NOT glfw_FOUND)
-    message(STATUS "glfw not found... downloading and building")
-endif()
-
-FetchContent_MakeAvailable(glfw)
+# glm glew glfw
+include(cmake/FindGLM.cmake)
+include(cmake/FindGLEW.cmake)
+include(cmake/FindGLFW3.cmake)
 
 if (ENABLE_UTILS)
   find_package(assimp CONFIG REQUIRED)
@@ -78,13 +43,15 @@ add_compile_options(-DNOMINMAX)
 add_compile_options(-D_USE_MATH_DEFINES)
 add_compile_options(-D_CRT_SECURE_NO_WARNINGS)
 
-include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${glew_SOURCE_DIR}/include")
-include_directories("${glfw_SOURCE_DIR}/include")
 include_directories("${glm_SOURCE_DIR}")
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
-target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm-header-only)
+target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm)
+target_include_directories(tinygraphics PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+target_include_directories(tinygraphics PRIVATE glfw3)
+target_include_directories(tinygraphics PRIVATE glm)
+target_include_directories(tinygraphics PRIVATE glew)
 
 if (WITH_EXAMPLES)
   add_subdirectory("examples")
