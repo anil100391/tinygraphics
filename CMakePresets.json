@@ -13,7 +13,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/ninja-release",
         "cacheVariables": {
-            "WITH_EXAMPLES": false,
+            "WITH_EXAMPLES": "TRUE",
             "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
             "CMAKE_BUILD_TYPE": "Release",
             "CMAKE_INSTALL_PREFIX": "${sourceDir}/install"
@@ -26,7 +26,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/ninja-debug",
       "cacheVariables": {
-        "WITH_EXAMPLES": false,
+        "WITH_EXAMPLES": "TRUE",
         "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install"
