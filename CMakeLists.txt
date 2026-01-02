@@ -48,8 +48,8 @@ if (DEFINED glew_SOURCE_DIR AND (NOT glew_SOURCE_DIR STREQUAL ""))
 endif()
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
-target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm)
-target_include_directories(tinygraphics PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+target_link_libraries (tinygraphics PRIVATE glew_s PUBLIC OpenGL::GL glfw glm::glm)
+target_include_directories(tinygraphics PUBLIC .)
 
 if (WITH_EXAMPLES)
   add_subdirectory("examples")
