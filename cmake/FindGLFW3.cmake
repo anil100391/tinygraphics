@@ -1,7 +1,7 @@
 find_package(glfw3 CONFIG QUIET)
 
 if (NOT glfw3_FOUND)
-  message(STATUS "glfw not found... downloading and building")
+  message(STATUS "glfw not found... fetching from github")
 
   include(FetchContent)
   FetchContent_Declare(glfw3

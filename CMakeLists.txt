@@ -43,15 +43,13 @@ add_compile_options(-DNOMINMAX)
 add_compile_options(-D_USE_MATH_DEFINES)
 add_compile_options(-D_CRT_SECURE_NO_WARNINGS)
 
-include_directories("${glew_SOURCE_DIR}/include")
-include_directories("${glm_SOURCE_DIR}")
+if (DEFINED glew_SOURCE_DIR AND (NOT glew_SOURCE_DIR STREQUAL ""))
+  include_directories("${glew_SOURCE_DIR}/include")
+endif()
 
 add_library (tinygraphics STATIC ${utils_src} ${core_src})
 target_link_libraries (tinygraphics PRIVATE glfw glew_s OpenGL::GL glm::glm)
 target_include_directories(tinygraphics PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
-target_include_directories(tinygraphics PRIVATE glfw3)
-target_include_directories(tinygraphics PRIVATE glm)
-target_include_directories(tinygraphics PRIVATE glew)
 
 if (WITH_EXAMPLES)
   add_subdirectory("examples")

@@ -1,7 +1,7 @@
 find_package(glm CONFIG QUIET)
 
 if (NOT glm_FOUND)
-  message(STATUS "glm not found... downloading and building")
+  message(STATUS "glm not found... fetching from github")
 
   include(FetchContent)
   FetchContent_Declare(glm

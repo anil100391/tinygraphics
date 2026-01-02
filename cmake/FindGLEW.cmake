@@ -1,7 +1,7 @@
 find_package(GLEW CONFIG QUIET)
 
 if (NOT GLEW_FOUND)
-  message(STATUS "glew not found... downloading and building")
+  message(STATUS "glew not found... fetching from github")
 
   include(FetchContent)
   FetchContent_Declare(GLEW
