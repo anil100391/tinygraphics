@@ -21,14 +21,29 @@ file (GLOB core_src "${PROJECT_SOURCE_DIR}/src/app.cpp"
                     "${PROJECT_SOURCE_DIR}/src/vertexbuffer.cpp"
                     "${PROJECT_SOURCE_DIR}/src/stb_image.cpp")
 
-# Embed GLFW object files into tinygraphics
-add_library (tinygraphics STATIC ${utils_src} ${core_src} $<TARGET_OBJECTS:glfw>)
+set(imgui_src
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui_demo.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui_draw.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui_tables.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui_widgets.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_glfw.cpp"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_opengl3.cpp")
+
+# Embed GLFW and dearimgui object files into tinygraphics
+add_library (tinygraphics STATIC ${utils_src} ${core_src} ${imgui_src} $<TARGET_OBJECTS:glfw>)
 
 target_link_libraries (tinygraphics PRIVATE OpenGL::GL glad)
 
 # Include GLFW headers privately (not exported to users)
 target_include_directories(tinygraphics PRIVATE 
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glfw/include>)
+
+target_include_directories(tinygraphics PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui/backends>
+    $<INSTALL_INTERFACE:include/imgui>
+    $<INSTALL_INTERFACE:include/imgui/backends>)
 
 # Link against GLFW's platform dependencies (not GLFW itself, since its
 # object files are already embedded). Use plain library names instead of
@@ -90,6 +105,23 @@ install(TARGETS tinygraphics
 install(EXPORT tinygraphicsTargets
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tinygraphics
         NAMESPACE tinygraphics::)
+
+# install imgui headers skip examples docs etc
+set(imgui_core_headers
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imconfig.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui_internal.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imstb_rectpack.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imstb_textedit.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/imstb_truetype.h")
+set(imgui_backend_headers
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_glfw.h"
+    "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_opengl3.h")
+
+install(FILES ${imgui_core_headers}
+    DESTINATION include/imgui)
+install(FILES ${imgui_backend_headers}
+    DESTINATION include/imgui/backends)
 
 install(FILES "tinygraphicsConfig.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tinygraphics)
