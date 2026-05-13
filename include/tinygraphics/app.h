@@ -1,0 +1,53 @@
+#ifndef _app_h_
+#define _app_h_
+
+#include <string>
+
+#include <events/keyevent.h>
+#include <events/mouseevent.h>
+#include <events/windowevent.h>
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+struct GLFWwindow;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+struct WindowProperties
+{
+    WindowProperties() = default;
+    WindowProperties(unsigned int w, unsigned int h, const char *title, bool maximized);
+    ~WindowProperties() = default;
+
+    unsigned int _width     = 960u;
+    unsigned int _height    = 540u;
+    std::string  _title     = "DEBUG";
+    bool         _maximized = false;
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+class Application
+{
+public:
+    Application( const WindowProperties &wprops = WindowProperties() );
+
+    virtual ~Application();
+
+    void Run();
+
+    virtual void Update();
+
+    void GetWindowSize(int &width, int &height) const noexcept;
+    float GetCurrentTime() const noexcept;
+    void GetCursorPosition(double &x, double &y) const noexcept;
+
+    virtual bool OnEvent( Event &evt );
+
+protected:
+
+    WindowProperties _windPros;
+    GLFWwindow *     _window = nullptr;
+};
+
+#endif // _app_h_
