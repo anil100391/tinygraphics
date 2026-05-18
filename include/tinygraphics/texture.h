@@ -25,6 +25,11 @@ public:
         return _height;
     }
 
+    unsigned int GetID() const
+    {
+        return _rendererID;
+    }
+
 private:
 
     unsigned int    _rendererID = 0;
