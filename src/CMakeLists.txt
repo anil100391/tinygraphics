@@ -33,17 +33,25 @@ set(imgui_src
 # Embed GLFW and dearimgui object files into tinygraphics
 add_library (tinygraphics STATIC ${utils_src} ${core_src} ${imgui_src} $<TARGET_OBJECTS:glfw>)
 
+#################################################################################
+# Debug Symbols
+#################################################################################
+if (MSVC)
+    target_compile_options(tinygraphics PRIVATE
+        $<$<CONFIG:Debug>:/Zi>
+        $<$<CONFIG:Release>:/Zi>)
+    target_link_options(tinygraphics PRIVATE
+        $<$<CONFIG:Debug>:/DEBUG>
+        $<$<CONFIG:Release>:/DEBUG>)
+else()
+    # GCC / Clang
+    target_compile_options(tinygraphics PRIVATE
+        $<$<CONFIG:Debug>:-g>
+        $<$<CONFIG:Release>:-g>)
+endif()
+#################################################################################
+
 target_link_libraries (tinygraphics PRIVATE OpenGL::GL glad)
-
-# Include GLFW headers privately (not exported to users)
-target_include_directories(tinygraphics PRIVATE 
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glfw/include>)
-
-target_include_directories(tinygraphics PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui/backends>
-    $<INSTALL_INTERFACE:include/imgui>
-    $<INSTALL_INTERFACE:include/imgui/backends>)
 
 # Link against GLFW's platform dependencies (not GLFW itself, since its
 # object files are already embedded). Use plain library names instead of
@@ -56,6 +64,17 @@ elseif (UNIX)
     find_package(Threads REQUIRED)
     target_link_libraries(tinygraphics PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
 endif()
+
+
+# Include GLFW headers privately (not exported to users)
+target_include_directories(tinygraphics PRIVATE 
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glfw/include>)
+
+target_include_directories(tinygraphics PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui/backends>
+    $<INSTALL_INTERFACE:include/imgui>
+    $<INSTALL_INTERFACE:include/imgui/backends>)
 
 target_include_directories(tinygraphics
     PUBLIC
