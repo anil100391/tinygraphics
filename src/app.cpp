@@ -9,6 +9,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -148,17 +150,39 @@ WindowProperties::WindowProperties( unsigned int w,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Application::Application( const WindowProperties &wprops )
+Application::Application( const WindowProperties &wprops,
+                          bool initDearImGui )
 {
     if ( !glfwInit() )
         return;
 
+    float scale = 1.0f;
+    if ( initDearImGui )
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+        // Setup scaling
+        scale = ImGui_ImplGlfw_GetContentScaleForMonitor( glfwGetPrimaryMonitor() );
+        ImGuiStyle &style = ImGui::GetStyle();
+        style.ScaleAllSizes( scale );   // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+        style.FontScaleDpi = scale;     // Set initial font scale. (in docking branch: using io.ConfigDpiScaleFonts=true automatically overrides this for every window depending on the current monitor)
+    }
+
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    if ( wprops._notitle )
+    {
+        glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+    }
 
-    _window = glfwCreateWindow( wprops._width,
-                                wprops._height,
+    _window = glfwCreateWindow( wprops._width * scale,
+                                wprops._height * scale,
                                 wprops._title.c_str(),
                                 nullptr,
                                 nullptr );
@@ -191,12 +215,25 @@ Application::Application( const WindowProperties &wprops )
         glfwMaximizeWindow( _window );
     }
 
+    if ( initDearImGui )
+    {
+        // Setup Platform/Renderer backends
+        ImGui_ImplGlfw_InitForOpenGL( _window, true );          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+        ImGui_ImplOpenGL3_Init();
+    }
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 Application::~Application()
 {
+    if ( _initDearImGui )
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+    }
+
     if ( _window )
         glfwDestroyWindow( _window );
 }

@@ -21,8 +21,9 @@ struct WindowProperties
 
     unsigned int _width     = 960u;
     unsigned int _height    = 540u;
-    std::string  _title     = "DEBUG";
+    std::string  _title     = "tinygraphics";
     bool         _maximized = false;
+    bool         _notitle   = false;
 };
 
 // -----------------------------------------------------------------------------
@@ -30,7 +31,8 @@ struct WindowProperties
 class Application
 {
 public:
-    Application( const WindowProperties &wprops = WindowProperties() );
+    Application( const WindowProperties &wprops = WindowProperties(),
+                 bool initDearImGui = true );
 
     virtual ~Application();
 
@@ -48,6 +50,10 @@ protected:
 
     WindowProperties _windPros;
     GLFWwindow *     _window = nullptr;
+
+private:
+
+    bool             _initDearImGui = true;
 };
 
 #endif // _app_h_
