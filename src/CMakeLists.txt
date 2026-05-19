@@ -2,12 +2,10 @@ if (ENABLE_UTILS)
   find_package(assimp CONFIG REQUIRED)
 endif()
 
-#if (ENABLE_UTILS)
-if (1)
-  file (GLOB utils_src "${PROJECT_SOURCE_DIR}/utils/*.cpp" )
-else()
-  file (GLOB utils_src "" )
-endif()
+file (GLOB utils_src
+    "${PROJECT_SOURCE_DIR}/src/utils/mesh.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/meshbufferobjects.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/meshgl.cpp")
 
 file (GLOB core_src "${PROJECT_SOURCE_DIR}/src/app.cpp"
                     "${PROJECT_SOURCE_DIR}/src/camera.cpp"
