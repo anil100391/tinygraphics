@@ -3,10 +3,10 @@
 #include <memory>
 #include <tinygraphics/app.h>
 
-#include <shader.h>
-#include <camera.h>
-#include <texture.h>
-#include <utils/meshgl.h>
+#include <tinygraphics/shader.h>
+#include <tinygraphics/camera.h>
+#include <tinygraphics/texture.h>
+#include <tinygraphics/utils/meshgl.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------

@@ -7,7 +7,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include <vertexbufferlayout.h>
+#include <tinygraphics/vertexbufferlayout.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -306,6 +306,7 @@ void PlanetExplorer::CreateShader()
         "    vec3 viewDir = normalize(u_CameraPos - fragPos);\n"
         "    vec3 reflectDir = reflect(lightDir, norm);\n"
         "    vec3 specular = specularStrength * pow(max(dot(viewDir, reflectDir), 0.0), 32) * lightColor;\n"
+        "    specular = vec3(0.0);\n"
 
         "    vec3 color = (ambient +  diffuse + specular) * texture(u_Texture, fragTexCoord).rgb * 2;\n"
         "    // vec3 color = (ambient +  diffuse /*+ specular*/) * vec3(1.0);\n"
