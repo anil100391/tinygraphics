@@ -11,7 +11,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-static std::filesystem::path assetsDir;
+static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -20,26 +20,19 @@ PlanetExplorer::PlanetExplorer( const WindowProperties &wprops )
 {
     glEnable( GL_DEPTH_TEST );
     glEnable( GL_BLEND );
-}
 
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-PlanetExplorer::~PlanetExplorer()
-{
+    _camera.SetPosition( glm::vec3( 1.5f, 0.0f, 0.0f ) );
+    _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
+    _camera.SetType( Camera::PROJECTION::ORTHOGRAPHIC );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void PlanetExplorer::Update()
 {
-    if ( _animateCamera )
+    if ( _running )
     {
-        auto time = GetCurrentTime();
-        time = 0.0f;
-        auto dist = 1.5f;
-        glm::vec3 cameraPos( dist * std::cos( time ), dist * std::sin( time ), 0.0f );
-        _camera.SetPosition( cameraPos );
-        _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
+        _rotation -= 0.0005f;
     }
 
     Render();
@@ -73,7 +66,7 @@ bool PlanetExplorer::OnEvent( Event &evt )
     if ( evt.GetEventType() == EventType::KeyPressed &&
          static_cast<KeyEvent &>(evt).GetKeyCode() == 32 )
     {
-        _animateCamera = false;
+        _running = !_running;
     }
 
     return Application::OnEvent(evt);
@@ -99,7 +92,7 @@ void PlanetExplorer::Render()
     _glMesh->ibo()->Bind();
 
     // uniforms
-    if (!_shader )
+    if ( !_shader )
     {
         CreateShader();
     }
@@ -107,21 +100,15 @@ void PlanetExplorer::Render()
     _shader->Bind();
     int width, height;
     GetWindowSize(width, height);
-    _shader->SetUniform2f( "u_Size", static_cast<float>(width), static_cast<float>(height) );
-    double x, y;
-    GetCursorPosition( x, y );
-    _shader->SetUniform2f( "u_MousePos", static_cast<float>(x), static_cast<float>(y) );
-    _shader->SetUniform3f( "u_Color", 1.0f, 1.0f, 1.0f );
+    float aspectRatio = (1.0f * width) / height;
 
     glm::vec3 lightPos = _camera.GetPosition();
     _shader->SetUniform3f( "u_LightPos", lightPos );
 
-    glm::mat4 model = glm::rotate( glm::mat4( 1.0f ), -0.25f * GetCurrentTime(), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    glm::mat4 model = glm::rotate( glm::mat4( 1.0f ), _rotation, glm::vec3( 0.0f, 0.0f, 1.0f ) );
     glm::mat4 view = _camera.GetViewMatrix();
-    glm::mat4 projection = glm::perspective( glm::radians( 45.0f ),
-                                         static_cast<float>( width ) / static_cast<float>( height ),
-                                         0.1f,
-                                         100.0f );
+    glm::mat4 projection = _camera.GetProjectionMatrix( aspectRatio, 0.1f, 100.0f );
+
     _shader->SetUniformMat4f( "u_M", model );
     _shader->SetUniformMat4f( "u_V", view );
     _shader->SetUniformMat4f( "u_P", projection );
@@ -229,105 +216,39 @@ void PlanetExplorer::CreateShader()
         return;
     }
 
-    std::string vertexShader =
-        "#version 330 core\n"
-        "layout(location = 0) in vec3 position;\n"
-        "layout(location = 1) in vec3 normal;\n"
-        "layout(location = 2) in vec2 texCoord;\n"
-        "layout(location = 3) in vec3 tangent;\n"
-        "layout(location = 4) in vec3 bitangent;\n"
-        "uniform mat4 u_M;\n"
-        "uniform mat4 u_V;\n"
-        "uniform mat4 u_P;\n"
-        "out vec3 fragNormal;\n"
-        "out vec3 fragPos;\n"
-        "out vec2 fragTexCoord;\n"
-        "out mat3 TBN;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = u_P * u_V * u_M * vec4(position, 1.0);\n"
-        "    fragPos = vec3(u_M * vec4(position, 1.0));\n"
-        "    fragNormal = mat3(transpose(inverse(u_M))) * normal;\n"
-        "    fragTexCoord = texCoord;\n"
-        "    vec3 T = normalize( vec3( u_M * vec4( tangent, 0.0 ) ) );\n"
-        "    vec3 B = normalize( vec3( u_M * vec4( bitangent, 0.0 ) ) );\n"
-        "    vec3 N = normalize( vec3( u_M * vec4( normal, 0.0 ) ) );\n"
-        "    TBN = mat3( T, B, N );\n"
-        "}"
-    ;
+    std::string vertexShader;
+    {
+        std::ifstream file( exeDir.string() + "/shaders/v3n3t2t3bt3_vert.glsl" );
+        std::string line;
+        while ( std::getline( file, line ) )
+        {
+            vertexShader += line;
+            vertexShader += "\n";
+        }
+    }
 
-    std::string fragmentShader =
-        "#version 330 core\n"
-        "in vec3 fragNormal;\n"
-        "in vec3 fragPos;\n"
-        "in vec2 fragTexCoord;\n"
-        "in mat3 TBN;\n"
-        "uniform vec3 u_Color;\n"
-        "uniform vec3 u_LightPos;\n"
-        "uniform vec3 u_CameraPos;\n"
-        "uniform int  u_Emission;\n"
-        "uniform sampler2D u_Texture;\n"
-        "uniform sampler2D u_NormalMap;\n"
-        "void main()\n"
-        "{\n"
-        "    if ( u_Emission != 0 )\n"
-        "    {\n"
-        "        gl_FragColor = vec4(u_Color, 1.0);\n"
-        "        return;\n"
-        "    }\n"
-
-        "    vec3 lightColor = vec3(1.0);\n"
-        "    // AMBIENT\n"
-        "    float ambientFactor = 0.02;\n"
-        "    vec3 ambient = ambientFactor * lightColor;\n"
-
-        "    // DIFFUSE\n"
-        "    // obtain normal from normal map in range [0,1]\n"
-        "    vec3 norm = texture(u_NormalMap, fragTexCoord).rgb;\n"
-        "    // transform normal vector to range [-1,1]\n"
-        "    norm = norm * 2.0 - 1.0;\n"
-        "    norm.xy *= 2.0;\n"
-        "    // recompute z (instead of distorting it)"
-        "    norm.z = sqrt( 1.0 - clamp( dot( norm.xy, norm.xy ), 0.0, 1.0 ) );\n"
-
-        "    norm = normalize(TBN * norm);\n"
-
-        "    // vec3 norm = normalize(fragNormal);\n"
-        "    // norm = normalize(fragNormal);\n"
-
-        "    vec3 lightDir = normalize(u_LightPos - fragPos);\n"
-        "    float diffuseFactor = max(dot(norm, lightDir), 0.0);\n"
-        "    vec3 diffuse = diffuseFactor * lightColor;\n"
-        "    gl_FragColor = vec4(vec3(diffuse), 1.0);\n"
-        "    // return;"
-
-        "    // SPECULAR\n"
-        "    float specularStrength = 0.5;\n"
-        "    vec3 viewDir = normalize(u_CameraPos - fragPos);\n"
-        "    vec3 reflectDir = reflect(lightDir, norm);\n"
-        "    vec3 specular = specularStrength * pow(max(dot(viewDir, reflectDir), 0.0), 32) * lightColor;\n"
-        "    specular = vec3(0.0);\n"
-
-        "    vec3 color = (ambient +  diffuse + specular) * texture(u_Texture, fragTexCoord).rgb * 2;\n"
-        "    // vec3 color = (ambient +  diffuse /*+ specular*/) * vec3(1.0);\n"
-        "    // float gamma = 2.2;\n"
-        "    // color = pow( color, vec3( 1.0 / gamma ) );\n"
-        "    // color = pow( color, vec3(0.5) );\n"
-        "    gl_FragColor = vec4(0.5 * color, 1.0);\n"
-        "}"
-    ;
+    std::string fragmentShader;
+    {
+        std::ifstream file( exeDir.string() + "/shaders/v3n3t2t3bt3_frag.glsl" );
+        std::string line;
+        while ( std::getline( file, line ) )
+        {
+            fragmentShader += line;
+            fragmentShader += "\n";
+        }
+    }
 
     _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
 
-    _texture = std::make_unique<Texture>( assetsDir.string() + "/mars.jpg" );
-    _normalMap = std::make_unique<Texture>( assetsDir.string() + "/mars_normal.jpg" );
+    _texture = std::make_unique<Texture>( exeDir.string() + "/assets/mars.jpg" );
+    _normalMap = std::make_unique<Texture>( exeDir.string() + "/assets/mars_normal.jpg" );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 int main(int argc, const char* argv[])
 {
-    assetsDir = std::filesystem::absolute(argv[0]).parent_path() / "assets";
+    exeDir = std::filesystem::absolute( argv[0] ).parent_path();
 
     WindowProperties wprops;
     wprops._maximized = true;

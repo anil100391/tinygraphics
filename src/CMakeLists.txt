@@ -139,6 +139,8 @@ install(FILES ${imgui_core_headers}
     DESTINATION include/imgui)
 install(FILES ${imgui_backend_headers}
     DESTINATION include/imgui/backends)
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/shaders"
+    DESTINATION .)
 
 install(FILES "tinygraphicsConfig.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tinygraphics)

@@ -15,7 +15,7 @@ class PlanetExplorer : public Application
 public:
 
     PlanetExplorer( const WindowProperties &wprops );
-    virtual ~PlanetExplorer();
+    virtual ~PlanetExplorer() = default;
 
     virtual void Update() override;
     virtual bool OnEvent( Event &evt ) override;
@@ -33,5 +33,7 @@ private:
     std::unique_ptr<Texture> _normalMap;
 
     Camera _camera;
-    bool   _animateCamera = true;
+
+    float  _rotation = 0.0f;
+    bool   _running  = true;
 };

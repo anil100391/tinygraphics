@@ -1,21 +1,20 @@
 #include <memory>
-#include <iostream>
+#include <fstream>
+#include <filesystem>
 
-#include <app.h>
-#include <renderer.h>
+#include <string>
+#include <tinygraphics/app.h>
+#include <tinygraphics/renderer.h>
 
-#include <vertexarray.h>
-#include <indexbuffer.h>
-#include <vertexbuffer.h>
-#include <vertexbufferlayout.h>
-
-// #include <imgui.h>
-// #include <imgui_impl_glfw.h>
-// #include <imgui_impl_opengl3.h>
+#include <tinygraphics/camera.h>
+#include <tinygraphics/vertexarray.h>
+#include <tinygraphics/indexbuffer.h>
+#include <tinygraphics/vertexbuffer.h>
+#include <tinygraphics/vertexbufferlayout.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-const char *glsl_version = "#version 130";
+static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -23,14 +22,9 @@ class TestsApplication : public Application
 {
 public:
     TestsApplication();
-    ~TestsApplication();
+    ~TestsApplication() = default;
 
     virtual void Update() override;
-
-    virtual bool OnEvent( Event &evt ) override
-    {
-        return true;
-    }
 
 private:
 
@@ -38,45 +32,29 @@ private:
     std::unique_ptr<VertexBuffer> _vbo;
     std::unique_ptr<IndexBuffer>  _ibo;
     std::unique_ptr<Shader>       _shader;
+
+    Camera                        _camera;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 TestsApplication::TestsApplication() : Application( {1920, 1080, "tinygraphics", true} )
 {
-    /*
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL( _window, true );
-    ImGui_ImplOpenGL3_Init( glsl_version );
+    _camera.SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+    _camera.SetLookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    _camera.SetType(Camera::PROJECTION::ORTHOGRAPHIC);
 
-    auto &io = ImGui::GetIO();
-    auto font = io.Fonts->AddFontFromFileTTF( "res/fonts/Open_Sans/OpenSans-Regular.ttf", 16.0f );
-
-    auto& style = ImGui::GetStyle();
-    style.ChildRounding = 0.0f;
-    style.WindowRounding = 0.0f;
-    style.FrameRounding = 0.0f;
-    style.GrabRounding = 0.0f;
-    style.PopupRounding = 0.0f;
-    style.ScrollbarRounding = 0.0f;
-    // style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.08f, 0.56f, 0.24, 1.0f);
-    // style.Colors[ImGuiCol_ResizeGrip]    = ImVec4(0.08f, 0.56f, 0.24, 1.0f);
-    // style.Colors[ImGuiCol_Button]        = ImVec4(0.08f, 0.56f, 0.24, 1.0f);
-    */
-
-    std::string vertexShader =
-        "#version 330 core\n"
-        "layout(location = 0) in vec2 position;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = vec4(position, 0.0, 1.0);\n"
-        "}"
-    ;
+    std::string vertexShader;
+    std::ifstream file(exeDir.string() + "/shaders/v3n3_vert.glsl");
+    std::string line;
+    while (std::getline(file, line))
+    {
+        vertexShader += line;
+        vertexShader += "\n";
+    }
 
     // "Plasma" by @XorDev
     // X Post: x.com/XorDev/status/1894123951401378051
-
     std::string fragmentShader =
         "#version 330 core\n"
         "uniform vec2 u_Size;\n"
@@ -113,30 +91,25 @@ TestsApplication::TestsApplication() : Application( {1920, 1080, "tinygraphics",
         "    gl_FragColor = mainImage();\n"
         "}";
 
-    float d = -1.0f;
-    std::vector<float> positions = { -d, -d,
-                                      d, -d,
-                                      d,  d,
-                                     -d,  d };
+    float xmin = -1.0f;
+    float xmax = 1.0f;
+    float zmin = -1.0f;
+    float zmax = 1.0f;
+    std::vector<float> positions = { xmin, 0.0f, zmin, 0.0f, -1.0f, 0.0f,
+                                     xmax, 0.0f, zmin, 0.0f, -1.0f, 0.0f,
+                                     xmax, 0.0f, zmax, 0.0f, -1.0f, 0.0f,
+                                     xmin, 0.0f, zmax, 0.0f, -1.0f, 0.0f};
 
     std::vector<unsigned int> indices = { 0, 1, 2, 2, 3, 0 };
 
     VertexBufferLayout layout;
-    layout.Push<float>( 2 );
+    layout.Push<float>( 3 );
+    layout.Push<float>( 3 );
     _vao = std::make_unique<VertexArray>();
     _vbo = std::make_unique<VertexBuffer>(positions.data(), static_cast<unsigned int>(positions.size() * sizeof(float)));
     _vao->AddBuffer( *_vbo, layout );
     _ibo = std::make_unique<IndexBuffer>(indices.data(), static_cast<unsigned int>(indices.size()));
     _shader = std::make_unique<Shader>(vertexShader, fragmentShader);
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-TestsApplication::~TestsApplication()
-{
-    // ImGui_ImplOpenGL3_Shutdown();
-    // ImGui_ImplGlfw_Shutdown();
-    // ImGui::DestroyContext();
 }
 
 // -----------------------------------------------------------------------------
@@ -147,36 +120,19 @@ void TestsApplication::Update()
     glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
     renderer.Clear();
 
-    /*
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // ImGui::ShowDemoWindow();
-
-    if ( ImGui::CollapsingHeader( "Render Statistics" ) )
-    {
-        ImGui::Text( "Application average %.3f ms/frame (%.1f FPS)",
-                     1000.0f / ImGui::GetIO().Framerate,
-                     ImGui::GetIO().Framerate );
-    }
-
-    ImGui::Separator();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
-    */
-
     // uniforms
     _shader->Bind();
     int width, height;
     GetWindowSize(width, height);
+    float aspectRatio = (1.0f * width) / height;
     _shader->SetUniform2f( "u_Size", static_cast<float>(width), static_cast<float>(height) );
     double x, y;
     GetCursorPosition( x, y );
     _shader->SetUniform2f( "u_MousePos", static_cast<float>(x), static_cast<float>(y) );
     _shader->SetUniform1f( "u_Time", GetCurrentTime() );
+    _shader->SetUniformMat4f("u_M", glm::identity<glm::mat4>());
+    _shader->SetUniformMat4f("u_V", _camera.GetViewMatrix());
+    _shader->SetUniformMat4f("u_P", _camera.GetProjectionMatrix(aspectRatio, 0.1f, 100.0f));
 
     // draw
     renderer.Draw( *_vao, *_ibo, *_shader );
@@ -187,6 +143,8 @@ void TestsApplication::Update()
 // -----------------------------------------------------------------------------
 int main( int argc, char *argv[] )
 {
+    exeDir = std::filesystem::absolute( argv[0] ).parent_path();
+
     TestsApplication app;
     app.Run();
     return 0;
