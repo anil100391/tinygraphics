@@ -41,5 +41,5 @@ void main()
 
     vec3 color = (ambient +  diffuse + specular) * texture(u_Texture, fragTexCoord).rgb;
     // color = (ambient +  diffuse + specular) * diffuse;
-    gl_FragColor = vec4(0.5 * color, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }
