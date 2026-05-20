@@ -26,8 +26,7 @@ public:
     enum DRAW_MODE
     {
         LINES,
-        TRIANGLES,
-        QUADS
+        TRIANGLES
     };
 
     void Clear() const;

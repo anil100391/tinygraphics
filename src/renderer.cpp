@@ -58,7 +58,6 @@ GLenum Renderer::GetGLDrawMode( DRAW_MODE dm ) const
     switch (dm)
     {
         case DRAW_MODE::TRIANGLES: return GL_TRIANGLES;
-        case DRAW_MODE::QUADS:     return GL_QUADS;
         case DRAW_MODE::LINES:     return GL_LINES;
         default:                   return GL_INVALID_ENUM;
     }
