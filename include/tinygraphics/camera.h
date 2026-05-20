@@ -2,6 +2,7 @@
 #define _camera_h_
 
 #include <cassert>
+#include <numbers>
 
 #include <glm/glm.hpp>
 #include <glm/geometric.hpp>
@@ -80,36 +81,37 @@ public:
         return _viewMatrix;
     }
 
+    [[nodiscard]] const glm::mat4 GetProjectionMatrix(float aspectRatio,
+                                                      float zNear,
+                                                      float zFar) noexcept
+    {
+        if ( GetType() == PROJECTION::ORTHOGRAPHIC )
+        {
+            float distance = glm::length(_position - _lookAt);
+            float size = distance * std::tan(_fov / 2.0f);
+            return glm::ortho(-size * aspectRatio, size * aspectRatio, -size, size, zNear, zFar);
+        }
+
+        assert(GetType() == PROJECTION::PERSPECTIVE);
+        return glm::perspective(_fov,
+                                aspectRatio,
+                                zNear,
+                                zFar);
+    }
+
     void OnEvent( Event &evt );
 
 private:
 
     void ComputeViewMatrix()
     {
-        if ( GetType() == PROJECTION::ORTHOGRAPHIC )
-        {
-            _viewMatrix = GetOrthographicViewMatrix();
-        }
-        else
-        {
-            assert(GetType() == PROJECTION::PERSPECTIVE);
-            _viewMatrix = GetPerspectiveViewMatrix();
-        }
-    }
-
-    [[nodiscard]] glm::mat4 GetOrthographicViewMatrix() const noexcept
-    {
-        return glm::mat4(1.0f);
-    }
-
-    [[nodiscard]] glm::mat4 GetPerspectiveViewMatrix() const noexcept
-    {
-        return glm::lookAt( _position, _lookAt, _upVec );
+        _viewMatrix = glm::lookAt( _position, _lookAt, _upVec );
     }
 
     glm::vec3           _position;
     glm::vec3           _lookAt;
     glm::vec3           _upVec = glm::vec3(0.0f, 0.0f, 1.0f);
+    float               _fov = std::numbers::pi / 4; // radians
 
     glm::mat4           _viewMatrix;
     bool                _viewDirty = true;
