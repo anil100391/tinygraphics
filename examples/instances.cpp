@@ -1,5 +1,5 @@
 #include <memory>
-#include <iostream>
+#include <algorithm>
 
 #include <tinygraphics/app.h>
 #include <tinygraphics/renderer.h>
