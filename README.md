@@ -1,5 +1,5 @@
 # About
-Tiny lib for setting up a graphics app using opengl and glfw
+Tiny lib for setting up a graphics app using opengl + glfw + dearimgui
 
 # Building
 
@@ -13,7 +13,7 @@ Tiny lib for setting up a graphics app using opengl and glfw
   ```bash
   sudo apt-get install libgl-dev libwayland-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxkbcommon-dev
   ```
-  if using provided presets for configuring using cmake install ninja-build
+  optionally ninja-build for faster builds
   ```bash
   sudo apt-get install ninja-build
   ```
@@ -29,7 +29,7 @@ In bash (on linux) or developer powershell (on windows)
   cd tinygraphics
   ```
 
-* configure using debug or release preset
+* configure (skip -G Ninja if you don't have ninja installed)
   ```
   cmake -B build -S . -G Ninja
   ```
