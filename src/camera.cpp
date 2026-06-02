@@ -37,6 +37,7 @@ void Camera::OnEvent( Event &evt )
             glm::vec3 cameraDirection = glm::normalize( GetPosition() - GetLookAt() );
             glm::vec3 cameraRight = glm::normalize( glm::cross( GetUpVec(), cameraDirection ) );
             glm::vec3 cameraUp = glm::cross( cameraDirection, cameraRight );
+            SetUpVec( cameraUp );
 
             int xPixelMove = mouseEvt.X() - prevDragX;
             double dthetaX = -1.0 * xPixelMove * (1.0 / 5.0) * (M_PI / 180.0); // 1 deg rotation per 5 pixel move
