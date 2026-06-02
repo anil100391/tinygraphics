@@ -33,6 +33,8 @@ public:
 
 private:
 
+    void UpdateCharges();
+
     struct Charge
     {
         float amount;
@@ -53,6 +55,8 @@ private:
 
     int _numInstances = 100 * 100;
     Camera _camera;
+
+    float _lastUpdate = 0.0f;
 };
 
 // -----------------------------------------------------------------------------
@@ -101,67 +105,12 @@ VectorField::VectorField() : Application( {1080, 1080, "tinygraphics", true} )
         "    vec3 temperature2 = 0.5 + 0.5 * cos(hue + vec3(6.0, 1.0, 2.0));\n"
         "    vec3 rainbow1 = 0.5 + 0.5 * cos(hue + vec3(0.0, 2.0, 4.0));\n"
         "    vec3 rainbow2 = 0.5 + 0.5 * cos(hue + vec3(0.0, 1.0, 3.0));\n"
+        "    vec3 rainbow3 = 0.5 + 0.5 * cos(hue + vec3(1.5, 0.0, 4.5));\n"
         "    gl_FragColor = vec4(rainbow2, 1.0);\n"
         "}"
     ;
 
-    float scale = 0.03f;
-    std::vector<float> positions = { 0.0f, 0.0f,
-                                     1.0f * scale,  0.0f,
-                                     0.8f * scale,  0.1f * scale,
-                                     0.8f * scale, -0.1f * scale };
-
     std::vector<unsigned int> indices = { 0, 1, 1, 2, 2, 3, 3, 1 };
-
-    VertexBufferLayout layout;
-    layout.Push<float>( 2 );
-
-    // instance array for updating positions
-    std::vector<glm::vec4> instanceData( _numInstances );
-    std::vector<glm::vec3> colors( _numInstances );
-    std::vector<float> scales( _numInstances );
-    unsigned int N = std::sqrt( _numInstances );
-    for ( unsigned int y = 0; y < N; ++y )
-    {
-        for ( unsigned int x = 0; x < N; ++x )
-        {
-            auto p = glm::vec2( -1.0f + (2.0f * x) / (N-1), -1.0f + (2.0f * y) / (N-1));
-            auto ef = ElectricField( p );
-            auto scale = std::min( glm::length( ef ), 50.0f );
-            auto efnorm = glm::normalize( ef );
-            auto angle = std::atan2( efnorm.y, efnorm.x );
-            instanceData[y * N + x] = glm::vec4( p.x, p.y, angle, std::min( scale / 50.0f, 1.0f ) );
-            scales[y * N + x] = scale;
-        }
-    }
-
-    _vao = std::make_unique<VertexArray>();
-    _vbo = std::make_unique<VertexBuffer>(positions.data(), static_cast<unsigned int>(positions.size() * sizeof(float)));
-    _vao->AddBuffer( *_vbo, layout );
-
-    // instance VBO
-    _instanceVBO = std::make_unique<VertexBuffer>( instanceData.data(), static_cast<unsigned int>(instanceData.size() * sizeof( glm::vec4 )) );
-    VertexBufferLayout instanceLayout;
-    instanceLayout.Push<float>( 4 );
-    _vao->AddBuffer( *_instanceVBO, instanceLayout, true );
-
-    // instance VBO
-    auto maxScale = *std::max_element( scales.begin(), scales.end() );
-    for ( unsigned int y = 0; y < N; ++y )
-    {
-        for ( unsigned int x = 0; x < N; ++x )
-        {
-            scales[y * N + x] = std::sqrt( scales[y * N + x] / maxScale );
-            auto fac = scales[y * N + x];
-            colors[y * N + x] = glm::vec3( fac );
-        }
-    }
-
-    _colorVBO = std::make_unique<VertexBuffer>( scales.data(), static_cast<unsigned int>( scales.size() * sizeof( float ) ) );
-    VertexBufferLayout colorLayout;
-    colorLayout.Push<float>( 1 );
-    _vao->AddBuffer( *_colorVBO, colorLayout, true );
-
     _ibo = std::make_unique<IndexBuffer>(indices.data(), static_cast<unsigned int>(indices.size()));
     _shader = std::make_unique<Shader>(vertexShader, fragmentShader);
 }
@@ -176,9 +125,19 @@ VectorField::~VectorField()
 // -----------------------------------------------------------------------------
 void VectorField::Update()
 {
+    auto t = GetCurrentTime();
+    if ( t - _lastUpdate > 0.04f )
+    {
+        UpdateCharges();
+        _lastUpdate = t;
+    }
+
     Renderer renderer;
     glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
     renderer.Clear();
+
+    if ( !_vbo )
+        return;
 
     // draw
     _shader->Bind();
@@ -210,6 +169,98 @@ void VectorField::Update()
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
     Application::Update();
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void VectorField::UpdateCharges()
+{
+    _q0.amount = -1.0f;
+    _q0.pos    = glm::vec2( -0.5f + 0.5f * std::sin(0.5f * _lastUpdate), 0.0f );
+
+    _q1.amount = 4.0f;
+    _q1.pos    = glm::vec2( 0.5f, 0.5f * std::sin(0.5f * _lastUpdate) );
+
+    float scale = 0.03f;
+    std::vector<float> positions = { 0.0f, 0.0f,
+                                     1.0f * scale,  0.0f,
+                                     0.8f * scale,  0.1f * scale,
+                                     0.8f * scale, -0.1f * scale };
+
+    VertexBufferLayout layout;
+    layout.Push<float>( 2 );
+
+    // instance array for updating positions
+    std::vector<glm::vec4> instanceData( _numInstances );
+    std::vector<float> scales( _numInstances );
+    unsigned int N = std::sqrt( _numInstances );
+    for ( unsigned int y = 0; y < N; ++y )
+    {
+        for ( unsigned int x = 0; x < N; ++x )
+        {
+            auto p = glm::vec2( -1.0f + (2.0f * x) / (N-1), -1.0f + (2.0f * y) / (N-1));
+            auto ef = ElectricField( p );
+            auto scale = std::min( glm::length( ef ), 50.0f );
+            auto efnorm = glm::normalize( ef );
+            auto angle = std::atan2( efnorm.y, efnorm.x );
+            instanceData[y * N + x] = glm::vec4( p.x, p.y, angle, std::min( scale / 50.0f, 1.0f ) );
+            scales[y * N + x] = scale;
+        }
+    }
+
+    if ( !_vao )
+    {
+        _vao = std::make_unique<VertexArray>();
+    }
+
+    if ( !_vbo )
+    {
+        _vbo = std::make_unique<VertexBuffer>( positions.data(), static_cast<unsigned int>(positions.size() * sizeof( float )) );
+        _vao->AddBuffer( *_vbo, layout );
+    }
+    else
+    {
+        _vbo->Bind();
+        _vbo->BufferData( positions.data(), static_cast<unsigned int>(positions.size() * sizeof( float )) );
+    }
+
+    // instance VBO
+    if ( !_instanceVBO )
+    {
+        _instanceVBO = std::make_unique<VertexBuffer>( instanceData.data(), static_cast<unsigned int>(instanceData.size() * sizeof( glm::vec4 )), GL_DYNAMIC_DRAW );
+        VertexBufferLayout instanceLayout;
+        instanceLayout.Push<float>( 4 );
+        _vao->AddBuffer( *_instanceVBO, instanceLayout, true );
+    }
+    else
+    {
+        _instanceVBO->Bind();
+        _instanceVBO->BufferData(instanceData.data(), static_cast<unsigned int>(instanceData.size() * sizeof( glm::vec4 )), GL_DYNAMIC_DRAW );
+    }
+
+    // instance VBO
+    auto maxScale = *std::max_element( scales.begin(), scales.end() );
+    for ( unsigned int y = 0; y < N; ++y )
+    {
+        for ( unsigned int x = 0; x < N; ++x )
+        {
+            scales[y * N + x] = std::sqrt( scales[y * N + x] / maxScale );
+            auto fac = scales[y * N + x];
+        }
+    }
+
+    if ( !_colorVBO )
+    {
+        _colorVBO = std::make_unique<VertexBuffer>( scales.data(), static_cast<unsigned int>( scales.size() * sizeof( float ) ) );
+        VertexBufferLayout colorLayout;
+        colorLayout.Push<float>( 1 );
+        _vao->AddBuffer( *_colorVBO, colorLayout, true );
+    }
+    else
+    {
+        _colorVBO->Bind();
+        _colorVBO->BufferData( scales.data(), static_cast<unsigned int>( scales.size() * sizeof( float ) ), GL_DYNAMIC_DRAW );
+    }
 }
 
 // -----------------------------------------------------------------------------
