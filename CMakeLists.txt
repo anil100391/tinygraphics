@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(tinygraphics VERSION 0.1 LANGUAGES CXX)
+project(tinygraphics VERSION 0.2 LANGUAGES CXX)
 set (CMAKE_CXX_STANDARD 20)
 
 # for intellisense
@@ -36,6 +36,9 @@ if (WITH_EXAMPLES)
   add_subdirectory("examples")
 endif()
 
+# packaging
+set(CPACK_PACKAGE_NAME "tinygraphics")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 set(CPACK_GENERATOR "ZIP")
 
 include(CPack)
