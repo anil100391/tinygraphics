@@ -32,7 +32,7 @@ add_subdirectory("third_party/glm")
 
 add_subdirectory("src")
 
-if (WITH_EXAMPLES)
+if (NOT SKIP_EXAMPLES)
   add_subdirectory("examples")
 endif()
 

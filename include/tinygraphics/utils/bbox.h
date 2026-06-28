@@ -1,7 +1,9 @@
 #ifndef _bbox_h_
 #define _bbox_h_
 
+#include <cmath>
 #include <cfloat>
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 class box3
@@ -33,6 +35,14 @@ public:
         center[1] = (_min[1] + _max[1]) / 2;
         center[2] = (_min[2] + _max[2]) / 2;
         return center;
+    }
+
+    [[nodiscard]] float radius() const noexcept
+    {
+        float dx = ( _max[0] - _min[0] );
+        float dy = ( _max[1] - _min[1] );
+        float dz = ( _max[2] - _min[2] );
+        return std::sqrt( dx * dx + dy * dy + dz * dz );
     }
 
     [[nodiscard]] bool contains(float *v) const noexcept
