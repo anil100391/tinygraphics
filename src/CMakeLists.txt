@@ -1,10 +1,7 @@
-if (ENABLE_UTILS)
-  find_package(assimp CONFIG REQUIRED)
-endif()
-
 file (GLOB utils_src
     "${PROJECT_SOURCE_DIR}/src/utils/mesh.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshbufferobjects.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/objio.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshgl.cpp")
 
 file (GLOB core_src "${PROJECT_SOURCE_DIR}/src/app.cpp"

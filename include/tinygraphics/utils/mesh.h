@@ -3,54 +3,55 @@
 
 #include <vector>
 #include <string>
-#include <array>
+#include <climits>
+#include <filesystem>
+
 #include <utils/bbox.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define USE_ASSIMP 0
-
-#if USE_ASSIMP
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#endif
-
-
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct mesh
+class Mesh
 {
-    template <int N>
-    using polyface = std::array<int, 3 * N>;
+public:
+    Mesh() = default;
+    Mesh( const std::filesystem::path &meshFile );
 
-    using triface = polyface<3>;
-
-    mesh(const char* filename);
-
-    std::string                _name;
-    std::vector<float>         _vertices;
-    std::vector<float>         _normals;
-    std::vector<float>         _textureCoords;
-    std::vector<triface>       _trias;
-
-#if USE_ASSIMP
-    Assimp::Importer           _importer;
-    const aiScene             *_assimpScene = nullptr;
-    const aiMesh              *_assimpMesh  = nullptr;
-#endif
-
-    void initializeFromFile(const char* filename);
-
-    [[nodiscard]] const glm::vec3& cog() const noexcept
+    struct Tria
     {
-        return _cog;
+        unsigned int vidx[3] = { UINT_MAX,
+                                 UINT_MAX,
+                                 UINT_MAX }; // vertex indices
+        unsigned int nidx[3] = { UINT_MAX,
+                                 UINT_MAX,
+                                 UINT_MAX }; // normal indices
+        unsigned int tidx[3] = { UINT_MAX,
+                                 UINT_MAX,
+                                 UINT_MAX }; // tex coord indices
+    };
+
+    std::string        _name;
+    std::vector<float> _vertices;
+    std::vector<float> _normals;
+    std::vector<float> _textureCoords;
+    std::vector<Tria>  _trias;
+
+    bool InitializeFromFile( const std::filesystem::path &meshFile );
+
+    [[nodiscard]] const glm::vec3 &cog() noexcept
+    {
+        if ( !_cog )
+            ComputeCog();
+        return *_cog;
     }
 
-    [[nodiscard]] const box3& bbox() const noexcept
+    [[nodiscard]] const box3 &bbox() noexcept
     {
-        return _bbox;
+        if ( !_bbox )
+            ComputeBBox();
+        return *_bbox;
     }
 
     [[nodiscard]] bool IsSmoothShaded() const noexcept
@@ -58,19 +59,33 @@ struct mesh
         return _smoothShaded;
     }
 
-    void SetSmoothShaded(bool smooth)
+    void SetSmoothShaded( bool smooth )
     {
         _smoothShaded = smooth;
     }
 
-private:
+    [[nodiscard]] bool HasNormals() const noexcept
+    {
+        return !_normals.empty();
+    }
 
+    [[nodiscard]] bool HasTextureCoords() const noexcept
+    {
+        return !_textureCoords.empty();
+    }
+
+    [[nodiscard]] bool IsEmpty() const noexcept
+    {
+        return _vertices.empty() && _trias.empty();
+    }
+
+private:
     void ComputeBBox();
     void ComputeCog();
 
-    bool        _smoothShaded = true;
-    box3        _bbox;
-    glm::vec3   _cog;
+    bool                       _smoothShaded = true;
+    std::unique_ptr<box3>      _bbox;
+    std::unique_ptr<glm::vec3> _cog;
 };
 
 #endif // _mesh_h_
