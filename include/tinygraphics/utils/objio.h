@@ -75,12 +75,15 @@ ObjIO::ParseIndex( const char *begin, const char *end, unsigned int &value )
 
     auto [ptr, ec] = std::from_chars( floatBegin, end, value );
 
-    while ( *ptr == '/' )
+    if ( *ptr == '/' )
     {
         ptr++;
     }
 
-    --value;
+    if ( ec == std::errc() )
+    {
+        --value;
+    }
 
-    return ( ec == std::errc() ) ? ptr : nullptr;
+    return ptr;
 }

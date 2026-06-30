@@ -16,7 +16,7 @@ Mesh::Mesh( const std::filesystem::path &meshFile )
 // -----------------------------------------------------------------------------
 bool Mesh::InitializeFromFile( const std::filesystem::path &meshFile )
 {
-    _name = meshFile.filename();
+    _name = meshFile.filename().string();
 
     ObjIO io( meshFile, *this );
     return io.Populate();
