@@ -3,6 +3,8 @@
 #include <filesystem>
 
 #include "viewer.h"
+#include "glm/ext/matrix_transform.hpp"
+#include "vertexbuffer.h"
 
 #include <tinygraphics/utils/mesh.h>
 #include <tinygraphics/utils/meshbufferobjects.h>
@@ -35,9 +37,14 @@ Viewer::~Viewer()
 // -----------------------------------------------------------------------------
 void Viewer::Update()
 {
-    if ( !_glMesh )
+    if ( !_glSubject )
     {
-        LoadMesh( "/home/nebula/code/tinygraphics/examples/suzanne.obj" );
+        LoadSubject();
+    }
+
+    if ( !_glGround )
+    {
+        LoadGround();
     }
 
     // Render
@@ -73,11 +80,21 @@ void Viewer::Update()
         _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
     }
 
-    _glMesh->vao()->Bind();
-    _glMesh->ibo()->Bind();
+    _glSubject->vao()->Bind();
+    _glSubject->ibo()->Bind();
     _shader->Bind();
 
-    _shader->SetUniformMat4f( "u_M", glm::mat4( 1.0f ) );
+    static float lastFrameTime = GetCurrentTime();
+    float        time          = GetCurrentTime();
+    float        dt            = time - lastFrameTime;
+    if ( time > lastFrameTime )
+    {
+        dt            = time - lastFrameTime;
+        lastFrameTime = time;
+    }
+    _shader->SetUniformMat4f(
+        "u_M",
+        glm::rotate( glm::mat4( 1.0f ), time, glm::vec3( 0.0f, 1.0f, 0.0f ) ) );
     _shader->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
     int width, height;
     GetWindowSize( width, height );
@@ -86,10 +103,22 @@ void Viewer::Update()
                               _camera.GetProjectionMatrix( ar, 0.1f, 100.0f ) );
     _shader->SetUniform3f( "u_LightPos", _camera.GetPosition() );
     _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
-    _shader->SetUniform3f( "u_Color", glm::vec3( 0.5f, 0.5f, 0.5f ) );
+    _shader->SetUniform3f( "u_Color", glm::vec3( 0.32f, 0.31f, 0.26f ) );
 
     Renderer r;
-    r.Draw( *_glMesh->vao(), *_glMesh->ibo(), *_shader );
+    // draw subject
+    r.Draw( *_glSubject->vao(), *_glSubject->ibo(), *_shader );
+
+    // draw ground
+    auto groundMtx = glm::mat4( 1.0f );
+    groundMtx      = glm::rotate( groundMtx,
+                                  -std::numbers::pi_v<float> / 2,
+                                  glm::vec3( 1.0f, 0.0f, 0.0f ) );
+    groundMtx = glm::translate( groundMtx, glm::vec3( 0.0f, 0.0f, -1.0f ) );
+
+    _shader->SetUniformMat4f( "u_M", groundMtx );
+    _shader->SetUniform3f( "u_Color", glm::vec3( 0.412, 0.03f, 0.03f ) );
+    r.Draw( *_glGround->vao(), *_glGround->ibo(), *_shader );
 
     // ImGui render
     ImGui_ImplOpenGL3_NewFrame();
@@ -116,17 +145,15 @@ bool Viewer::OnEvent( Event &evt )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Viewer::LoadMesh( const std::filesystem::path &filePath )
+bool Viewer::GetGLBuffers( const Mesh                  &mesh,
+                           MeshBufferObjects::IOParams &mbosIO,
+                           VertexBufferLayout          &layout )
 {
-    Mesh mesh( filePath );
-
-    MeshBufferObjects::IOParams mbosIO;
     if ( !MeshBufferObjects::Get( mesh, mbosIO ) )
     {
-        std::cout << "error bo get\n";
+        return false;
     }
 
-    VertexBufferLayout layout;
     layout.Push<float>( 3u ); // vertex
     if ( mbosIO.hasNormals )
     {
@@ -138,8 +165,37 @@ bool Viewer::LoadMesh( const std::filesystem::path &filePath )
         layout.Push<float>( 2u );
     }
 
-    _glMesh = std::make_unique<MeshGL>(
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool Viewer::CreateGLMesh( const Mesh &mesh, std::unique_ptr<MeshGL> &glMesh )
+{
+    MeshBufferObjects::IOParams mbosIO;
+    VertexBufferLayout          layout;
+    if ( !GetGLBuffers( mesh, mbosIO, layout ) )
+    {
+        return false;
+    }
+
+    glMesh = std::make_unique<MeshGL>(
         mbosIO.vertexAttribs, layout, mbosIO.connectivity );
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool Viewer::LoadSubject()
+{
+    auto asset = std::filesystem::path(
+        "/home/nebula/code/tinygraphics/examples/suzanne.obj" );
+
+    Mesh mesh( asset );
+    if ( !CreateGLMesh( mesh, _glSubject ) )
+    {
+        return false;
+    }
 
     box3 box    = mesh.bbox();
     auto center = box.center();
@@ -148,6 +204,17 @@ bool Viewer::LoadMesh( const std::filesystem::path &filePath )
                          glm::vec3( 0.0, 0.0, 1.0 ) * 1.25f * box.radius() );
     _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
     return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool Viewer::LoadGround()
+{
+    auto asset = std::filesystem::path(
+        "/home/nebula/code/tinygraphics/examples/ground.obj" );
+
+    Mesh mesh( asset );
+    return CreateGLMesh( mesh, _glGround );
 }
 
 // -----------------------------------------------------------------------------
