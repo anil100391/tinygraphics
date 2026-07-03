@@ -1,10 +1,8 @@
 #include <memory>
-#include <iostream>
 #include <filesystem>
 
 #include "viewer.h"
 #include "glm/ext/matrix_transform.hpp"
-#include "vertexbuffer.h"
 
 #include <tinygraphics/utils/mesh.h>
 #include <tinygraphics/utils/meshbufferobjects.h>
@@ -17,6 +15,10 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -53,30 +55,10 @@ void Viewer::Update()
 
     if ( !_shader )
     {
-        std::string vertexShader;
-        {
-            std::ifstream file(
-                "/home/nebula/code/tinygraphics/shaders/v3n3_vert.glsl" );
-            std::string line;
-            while ( std::getline( file, line ) )
-            {
-                vertexShader += line;
-                vertexShader += "\n";
-            }
-        }
-
-        std::string fragmentShader;
-        {
-            std::ifstream file(
-                "/home/nebula/code/tinygraphics/shaders/v3n3_frag.glsl" );
-            std::string line;
-            while ( std::getline( file, line ) )
-            {
-                fragmentShader += line;
-                fragmentShader += "\n";
-            }
-        }
-
+        std::filesystem::path vertexShader( exeDir.string() +
+            "/assets/shaders/v3n3_vert.glsl" );
+        std::filesystem::path fragmentShader( exeDir.string() +
+            "/assets/shaders/v3n3_frag.glsl" );
         _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
     }
 
@@ -188,8 +170,8 @@ bool Viewer::CreateGLMesh( const Mesh &mesh, std::unique_ptr<MeshGL> &glMesh )
 // -----------------------------------------------------------------------------
 bool Viewer::LoadSubject()
 {
-    auto asset = std::filesystem::path(
-        "/home/nebula/code/tinygraphics/examples/suzanne.obj" );
+    auto asset =
+        std::filesystem::path( exeDir.string() + "/assets/models/suzanne.obj" );
 
     Mesh mesh( asset );
     if ( !CreateGLMesh( mesh, _glSubject ) )
@@ -210,8 +192,8 @@ bool Viewer::LoadSubject()
 // -----------------------------------------------------------------------------
 bool Viewer::LoadGround()
 {
-    auto asset = std::filesystem::path(
-        "/home/nebula/code/tinygraphics/examples/ground.obj" );
+    auto asset =
+        std::filesystem::path( exeDir.string() + "/assets/models/ground.obj" );
 
     Mesh mesh( asset );
     return CreateGLMesh( mesh, _glGround );
@@ -221,6 +203,7 @@ bool Viewer::LoadGround()
 // -----------------------------------------------------------------------------
 int main( int argc, const char *argv[] )
 {
+    exeDir = std::filesystem::path( argv[0] ).parent_path();
     WindowProperties wprops;
     wprops._maximized = true;
     wprops._width     = 1920;

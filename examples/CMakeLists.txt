@@ -25,7 +25,6 @@ add_custom_command(TARGET planets POST_BUILD
     $<TARGET_FILE_DIR:planets>/shaders)
 
 # opengl viewer 
-add_executable(viewer "viewer.cpp")
-target_link_libraries(viewer PRIVATE tinygraphics glad)
+add_subdirectory(viewer)
 
 add_subdirectory(game)
