@@ -3,25 +3,33 @@
 
 #include <glad/glad.h>
 
+#include <shader.h>
 #include <vertexarray.h>
 #include <indexbuffer.h>
-#include <shader.h>
 
+// clang-format off
 #ifdef WIN
     #define ASSERT(x) if (!(x)) __debugBreak();
     #define GLCall(x) GLClearError();\
         x;\
         ASSERT(GLLogCall(#x, __FILE__, __LINE__))
 #endif
+// clang-format on
 
 void GLClearError();
-bool GLLogCall(const char* function, const char* file, int line);
+bool GLLogCall( const char *function, const char *file, int line );
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+class TextRenderer;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 class Renderer
 {
 public:
+    Renderer() = default;
+    ~Renderer();
 
     enum DRAW_MODE
     {
@@ -31,25 +39,31 @@ public:
 
     void Clear() const;
 
-    void Draw( const VertexArray& va,
+    void Draw( const VertexArray &va,
                const IndexBuffer &ib,
-               const Shader &shader,
-               DRAW_MODE dm = TRIANGLES ) const;
+               const Shader      &shader,
+               DRAW_MODE          dm = TRIANGLES ) const;
 
-    void DrawInstanced( const VertexArray& va,
+    void DrawInstanced( const VertexArray &va,
                         const IndexBuffer &ib,
-                        const Shader &shader,
-                        unsigned int count,
-                        DRAW_MODE dm = TRIANGLES ) const;
+                        const Shader      &shader,
+                        unsigned int       count,
+                        DRAW_MODE          dm = TRIANGLES ) const;
+
+    // text rendering
+    void SetFont( const std::filesystem::path &fontFile );
+    void SetfontSize( float fontSize );
+    void Draw( const std::string &text, unsigned int px, unsigned int py );
 
 private:
-  
     GLenum GetGLDrawMode( DRAW_MODE dm ) const;
-    void Draw( const VertexArray& va,
-               const IndexBuffer &ib,
-               const Shader &shader,
-               unsigned int instanceCount,
-               DRAW_MODE dm ) const;
+    void   Draw( const VertexArray &va,
+                 const IndexBuffer &ib,
+                 const Shader      &shader,
+                 unsigned int       instanceCount,
+                 DRAW_MODE          dm ) const;
+
+    TextRenderer *_fontRenderer = nullptr;
 };
 
 #endif // _renderer_h_

@@ -1,6 +1,6 @@
 #include <cubemap.h>
 #include <renderer.h>
-#include <stb_image.h>
+#include <stb/stb_image.h>
 #include <cassert>
 #include <iostream>
 

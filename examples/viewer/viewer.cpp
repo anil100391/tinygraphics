@@ -1,4 +1,5 @@
 #include <memory>
+#include <format>
 #include <filesystem>
 
 #include "viewer.h"
@@ -25,7 +26,7 @@ static std::filesystem::path exeDir;
 Viewer::Viewer( const WindowProperties &wprops ) : Application( wprops, true )
 {
     glEnable( GL_BLEND );
-    glEnable( GL_CULL_FACE );
+    // glEnable( GL_CULL_FACE );
     glEnable( GL_DEPTH_TEST );
 }
 
@@ -56,9 +57,9 @@ void Viewer::Update()
     if ( !_shader )
     {
         std::filesystem::path vertexShader( exeDir.string() +
-            "/assets/shaders/v3n3_vert.glsl" );
-        std::filesystem::path fragmentShader( exeDir.string() +
-            "/assets/shaders/v3n3_frag.glsl" );
+                                            "/assets/shaders/v3n3_vert.glsl" );
+        std::filesystem::path fragmentShader(
+            exeDir.string() + "/assets/shaders/v3n3_frag.glsl" );
         _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
     }
 
@@ -87,7 +88,7 @@ void Viewer::Update()
     _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
     _shader->SetUniform3f( "u_Color", glm::vec3( 0.32f, 0.31f, 0.26f ) );
 
-    Renderer r;
+    static Renderer r;
     // draw subject
     r.Draw( *_glSubject->vao(), *_glSubject->ibo(), *_shader );
 
@@ -101,15 +102,17 @@ void Viewer::Update()
     _shader->SetUniformMat4f( "u_M", groundMtx );
     _shader->SetUniform3f( "u_Color", glm::vec3( 0.412, 0.03f, 0.03f ) );
     r.Draw( *_glGround->vao(), *_glGround->ibo(), *_shader );
+    r.Draw( std::format( "FPS: {}", ImGui::GetIO().Framerate ), 32, 32 );
+    r.Draw( "Did I hear a squeak!", 32, 64 );
 
     // ImGui render
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin( "Performance" );
-    ImGui::Text( "FPS: %.1f", ImGui::GetIO().Framerate );
-    ImGui::End();
+    // ImGui::Begin( "Performance" );
+    // ImGui::Text( "FPS: %.1f", ImGui::GetIO().Framerate );
+    // ImGui::End();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
@@ -204,6 +207,7 @@ bool Viewer::LoadGround()
 int main( int argc, const char *argv[] )
 {
     exeDir = std::filesystem::path( argv[0] ).parent_path();
+
     WindowProperties wprops;
     wprops._maximized = true;
     wprops._width     = 1920;
