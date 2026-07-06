@@ -25,9 +25,6 @@ static std::filesystem::path exeDir;
 // -----------------------------------------------------------------------------
 Viewer::Viewer( const WindowProperties &wprops ) : Application( wprops, true )
 {
-    glEnable( GL_BLEND );
-    // glEnable( GL_CULL_FACE );
-    glEnable( GL_DEPTH_TEST );
 }
 
 // -----------------------------------------------------------------------------
@@ -51,6 +48,9 @@ void Viewer::Update()
     }
 
     // Render
+    glEnable( GL_CULL_FACE );
+    glEnable( GL_DEPTH_TEST );
+
     glClearColor( 0.1f, 0.1f, 0.1f, 1.0f );
     glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
 

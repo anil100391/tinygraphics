@@ -71,7 +71,8 @@ void TextRenderer::Draw( const Renderer    &renderer,
     layout.Push<float>( 2u ); // pos
     layout.Push<float>( 2u ); // tex coord
 
-    const std::vector<unsigned int> conn{ 0, 1, 2, 0, 2, 3 };
+    // choose winding such that we don't loose our triangles to back face culling
+    const std::vector<unsigned int> conn{ 0, 2, 1, 0, 3, 2 };
     static auto glMesh = std::make_unique<MeshGL>( vertices, layout, conn );
     static auto shader = std::make_unique<Shader>(
         std::filesystem::path{ "/home/nebula/code/tinygraphics/shaders/v2t2_vert.glsl" },
@@ -140,9 +141,9 @@ void TextRenderer::UpdateContext()
 {
     if ( !_context )
     {
-        _context = std::make_unique<TextRenderer::Context>();
-        _context->fontFile =
-            "/home/nebula/code/tinygraphics/fonts/JetBrainsMonoNLNerdFontMono-Thin.ttf";
+        _context           = std::make_unique<TextRenderer::Context>();
+        _context->fontFile = "/home/nebula/code/tinygraphics/fonts/"
+                             "JetBrainsMonoNLNerdFontMono-Thin.ttf";
         _context->fontSize = 32.0;
         _context->dirty    = true;
     }
