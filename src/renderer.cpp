@@ -102,7 +102,9 @@ void Renderer::Draw( const VertexArray &va,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::Draw( const std::string &text, unsigned int px, unsigned int py )
+void Renderer::DrawText( const std::string &text,
+                         unsigned int       px,
+                         unsigned int       py )
 {
     if ( text.empty() )
     {
@@ -114,5 +116,5 @@ void Renderer::Draw( const std::string &text, unsigned int px, unsigned int py )
         _fontRenderer = new TextRenderer();
     }
 
-    _fontRenderer->Draw(*this, text, px, py );
+    _fontRenderer->Draw( *this, text, px, py );
 }

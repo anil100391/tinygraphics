@@ -1,20 +1,40 @@
-file (GLOB utils_src
+if (WIN32)
+    set(CMAKE_PREFIX_PATH APPEND ${PROJECT_SOURCE_DIR}/tools/bin/win64)
+elseif(UNIX)
+    set(CMAKE_PREFIX_PATH APPEND ${PROJECT_SOURCE_DIR}/tools/bin/linux64)
+endif()
+
+find_program(ASSET2CPP asset2cpp REQUIRED)
+
+set(DEFAULT_FONT_TTF ${CMAKE_SOURCE_DIR}/fonts/JetBrainsMonoNLNerdFontMono_Thin.ttf)
+set(DEFAULT_FONT_CPP ${CMAKE_BINARY_DIR}/generated/default_font.cpp)
+
+add_custom_command(
+    OUTPUT ${DEFAULT_FONT_CPP}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
+    COMMAND ${ASSET2CPP} ${DEFAULT_FONT_TTF} ${DEFAULT_FONT_CPP}
+    DEPENDS ${DEFAULT_FONT_TTF}
+    COMMENT "Generating default_font.cpp"
+    VERBATIM)
+
+set(utils_src
     "${PROJECT_SOURCE_DIR}/src/utils/mesh.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshbufferobjects.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/objio.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshgl.cpp")
 
-file (GLOB core_src "${PROJECT_SOURCE_DIR}/src/app.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/camera.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/cubemap.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/framebuffer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/indexbuffer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/renderer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/textrenderer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/shader.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/texture.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/vertexarray.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/vertexbuffer.cpp")
+set(core_src "${DEFAULT_FONT_CPP}"
+             "${PROJECT_SOURCE_DIR}/src/app.cpp"
+             "${PROJECT_SOURCE_DIR}/src/camera.cpp"
+             "${PROJECT_SOURCE_DIR}/src/cubemap.cpp"
+             "${PROJECT_SOURCE_DIR}/src/framebuffer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/indexbuffer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/renderer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/textrenderer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/shader.cpp"
+             "${PROJECT_SOURCE_DIR}/src/texture.cpp"
+             "${PROJECT_SOURCE_DIR}/src/vertexarray.cpp"
+             "${PROJECT_SOURCE_DIR}/src/vertexbuffer.cpp")
 
 set(imgui_src
     "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui.cpp"
@@ -154,4 +174,3 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/fonts"
 
 install(FILES "tinygraphicsConfig.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tinygraphics)
-

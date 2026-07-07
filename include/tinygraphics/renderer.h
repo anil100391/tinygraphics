@@ -53,7 +53,7 @@ public:
     // text rendering
     void SetFont( const std::filesystem::path &fontFile );
     void SetfontSize( float fontSize );
-    void Draw( const std::string &text, unsigned int px, unsigned int py );
+    void DrawText( const std::string &text, unsigned int px, unsigned int py );
 
 private:
     GLenum GetGLDrawMode( DRAW_MODE dm ) const;

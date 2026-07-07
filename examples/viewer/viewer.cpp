@@ -102,8 +102,8 @@ void Viewer::Update()
     _shader->SetUniformMat4f( "u_M", groundMtx );
     _shader->SetUniform3f( "u_Color", glm::vec3( 0.412, 0.03f, 0.03f ) );
     r.Draw( *_glGround->vao(), *_glGround->ibo(), *_shader );
-    r.Draw( std::format( "FPS: {}", ImGui::GetIO().Framerate ), 32, 32 );
-    r.Draw( "Did I hear a squeak!", 32, 64 );
+
+    r.DrawText( std::format( "FPS: {}", ImGui::GetIO().Framerate ), 32, 32 );
 
     // ImGui render
     ImGui_ImplOpenGL3_NewFrame();

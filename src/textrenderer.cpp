@@ -1,4 +1,5 @@
 #include <format>
+#include <cstring>
 #include <iostream>
 
 #include <glad/glad.h>
@@ -10,7 +11,16 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
+#define WRITE_FONT_ATLAS 0
+
+#if WRITE_FONT_ATLAS
 #include <stb/stb_image_write.h>
+#endif // WRITE_FONT_ATLAS
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+extern unsigned char JetBrainsMonoNLNerdFontMono_Thin[];
+extern unsigned int  JetBrainsMonoNLNerdFontMono_Thin_size;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -142,8 +152,6 @@ void TextRenderer::UpdateContext()
     if ( !_context )
     {
         _context           = std::make_unique<TextRenderer::Context>();
-        _context->fontFile = "/home/nebula/code/tinygraphics/fonts/"
-                             "JetBrainsMonoNLNerdFontMono-Thin.ttf";
         _context->fontSize = 32.0;
         _context->dirty    = true;
     }
@@ -157,15 +165,28 @@ void TextRenderer::UpdateContext()
     std::vector<unsigned char> tempBitmap( 512 * 512, 0 );
 
     const auto &fontFile = _context->fontFile;
-    auto        file     = fopen( fontFile.c_str(), "rb" );
-    if ( !file )
-    {
-        std::cout << std::format(
-            "{:8}: Failed to open {}\n", "Error", fontFile.string() );
-    }
 
-    std::fread( ttfBuffer.data(), 1, ttfBuffer.size(), file );
-    std::fclose( file );
+    if ( !fontFile.string().empty() )
+    {
+        auto file = fopen( fontFile.c_str(), "rb" );
+        if ( !file )
+        {
+            std::cout << std::format(
+                "{:8}: Failed to open {}\n", "Error", fontFile.string() );
+        }
+
+        std::fread( ttfBuffer.data(), 1, ttfBuffer.size(), file );
+        std::fclose( file );
+    }
+    else
+    {
+        // default font
+        std::memcpy(
+            ttfBuffer.data(),
+            &JetBrainsMonoNLNerdFontMono_Thin[0],
+            std::min( JetBrainsMonoNLNerdFontMono_Thin_size,
+                      static_cast<unsigned int>( ttfBuffer.size() ) ) );
+    }
 
     stbtt_fontinfo info;
     int            ok = stbtt_InitFont( &info, ttfBuffer.data(), 0 );
@@ -186,8 +207,10 @@ void TextRenderer::UpdateContext()
                           96,
                           _context->fontMetrics );
 
+#if WRITE_FONT_ATLAS
     std::string output = "/home/nebula/font.png";
     stbi_write_png( output.c_str(), 512, 512, 1, tempBitmap.data(), 512 );
+#endif // WRITE_FONT_ATLAS
 
     glGenTextures( 1, &_context->textureID );
     glBindTexture( GL_TEXTURE_2D, _context->textureID );
