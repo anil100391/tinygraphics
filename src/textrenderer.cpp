@@ -168,7 +168,7 @@ void TextRenderer::UpdateContext()
 
     if ( !fontFile.string().empty() )
     {
-        auto file = fopen( fontFile.c_str(), "rb" );
+        auto file = fopen( fontFile.string().c_str(), "rb" );
         if ( !file )
         {
             std::cout << std::format(
