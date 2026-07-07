@@ -20,9 +20,6 @@ static std::filesystem::path exeDir;
 PlanetExplorer::PlanetExplorer( const WindowProperties &wprops )
     : Application( wprops, true )
 {
-    glEnable( GL_DEPTH_TEST );
-    glEnable( GL_BLEND );
-
     _camera.SetPosition( glm::vec3( 1.5f, 0.0f, 0.0f ) );
     _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
     _camera.SetType( Camera::PROJECTION::ORTHOGRAPHIC );
@@ -39,24 +36,24 @@ void PlanetExplorer::Update()
 
     Render();
 
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGui::Begin( "Debug" );
-    auto pos = _camera.GetPosition();
-    ImGui::Text( "Camera: (%f, %f, %f)", pos.x, pos.y, pos.z );
-    ImGui::End();
-
-    ImGui::Begin( "Performance" );
-
-    ImGuiIO &io = ImGui::GetIO();
-    ImGui::Text( "FPS: %.1f", io.Framerate );
-    ImGui::Text( "Frame time: %.3f ms", 1000.0f / io.Framerate );
-
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+    // ImGui_ImplOpenGL3_NewFrame();
+    // ImGui_ImplGlfw_NewFrame();
+    // ImGui::NewFrame();
+    // ImGui::Begin( "Debug" );
+    // auto pos = _camera.GetPosition();
+    // ImGui::Text( "Camera: (%f, %f, %f)", pos.x, pos.y, pos.z );
+    // ImGui::End();
+    //
+    // ImGui::Begin( "Performance" );
+    //
+    // ImGuiIO &io = ImGui::GetIO();
+    // ImGui::Text( "FPS: %.1f", io.Framerate );
+    // ImGui::Text( "Frame time: %.3f ms", 1000.0f / io.Framerate );
+    //
+    // ImGui::End();
+    //
+    // ImGui::Render();
+    // ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
     Application::Update();
 }
@@ -78,6 +75,11 @@ bool PlanetExplorer::OnEvent( Event &evt )
 // -----------------------------------------------------------------------------
 void PlanetExplorer::Render()
 {
+    glEnable( GL_DEPTH_TEST );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glEnable( GL_CULL_FACE );
+
     // Clear screen to draw
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -123,8 +125,16 @@ void PlanetExplorer::Render()
     _normalMap->Bind( 1 );
     _shader->SetUniform1i( "u_NormalMap", 1 );
 
-    Renderer r;
+    static Renderer r;
     r.Draw( *_glMesh->vao(), *_glMesh->ibo(), *_shader );
+
+    r.DrawText( "MARS (Planet)", 32, 32 );
+    r.DrawText( "Diameter:          6794 km", 32, 64 );
+    r.DrawText( "Distance from Sun: 228 million km (1.52 AU)", 32, 96 );
+    r.DrawText( "Year Length:       687 Earth Days", 32, 128 );
+    r.DrawText( "Day Length:        24.6 Hours", 32, 160 );
+    r.DrawText( "Axial Tilt:        25.19 degrees", 32, 192 );
+    r.DrawText( "Surface Gravity:   3.71 m/(s*s)", 32, 224 );
 }
 
 // -----------------------------------------------------------------------------
@@ -202,12 +212,12 @@ void PlanetExplorer::CreatePlanet()
         for ( size_t jj = 0; jj < numVerticalSegments - 1; ++jj )
         {
             conn.push_back( ( ii * numVerticalSegments ) + jj );
-            conn.push_back( ( ii * numVerticalSegments ) + jj + 1u );
             conn.push_back( ( ( ii + 1 ) * numVerticalSegments ) + jj + 1u );
+            conn.push_back( ( ii * numVerticalSegments ) + jj + 1u );
 
             conn.push_back( ( ii * numVerticalSegments ) + jj );
-            conn.push_back( ( ( ii + 1 ) * numVerticalSegments ) + jj + 1u );
             conn.push_back( ( ( ii + 1 ) * numVerticalSegments ) + jj );
+            conn.push_back( ( ( ii + 1 ) * numVerticalSegments ) + jj + 1u );
         }
     }
 
