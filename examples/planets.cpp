@@ -1,3 +1,4 @@
+#include <format>
 #include <numbers>
 #include <filesystem>
 
@@ -31,14 +32,14 @@ void PlanetExplorer::Update()
 {
     if ( _running )
     {
-        _rotation -= 0.0005f;
+        _rotation = -0.5 * GetCurrentTime();
     }
 
     Render();
 
-    // ImGui_ImplOpenGL3_NewFrame();
-    // ImGui_ImplGlfw_NewFrame();
-    // ImGui::NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
     // ImGui::Begin( "Debug" );
     // auto pos = _camera.GetPosition();
     // ImGui::Text( "Camera: (%f, %f, %f)", pos.x, pos.y, pos.z );
@@ -52,8 +53,8 @@ void PlanetExplorer::Update()
     //
     // ImGui::End();
     //
-    // ImGui::Render();
-    // ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
     Application::Update();
 }
@@ -135,6 +136,10 @@ void PlanetExplorer::Render()
     r.DrawText( "Day Length:        24.6 Hours", 32, 160 );
     r.DrawText( "Axial Tilt:        25.19 degrees", 32, 192 );
     r.DrawText( "Surface Gravity:   3.71 m/(s*s)", 32, 224 );
+
+    auto fps =
+        std::format( "FPS: {}", static_cast<int>( ImGui::GetIO().Framerate ) );
+    r.DrawText( fps, width - 128, 32 );
 }
 
 // -----------------------------------------------------------------------------
