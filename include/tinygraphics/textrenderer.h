@@ -5,6 +5,8 @@
 #include <memory>
 #include <filesystem>
 
+#include <shader.h>
+
 #include <stb/stb_truetype.h>
 
 // -----------------------------------------------------------------------------
@@ -26,15 +28,17 @@ public:
 private:
     struct Context
     {
-        std::filesystem::path fontFile;
-        float                 fontSize = 32.0f;
-        char                  first    = 32;
-        stbtt_bakedchar       fontMetrics[96]; // ASCII 32..126 is 95 glyphs
-        unsigned int          textureID = 0;
-        bool                  dirty     = true;
+        std::filesystem::path   fontFile;
+        float                   fontSize = 32.0f;
+        char                    first    = 32;
+        stbtt_bakedchar         fontMetrics[96]; // ASCII 32..126 is 95 glyphs
+        unsigned int            textureID = 0;
+        std::unique_ptr<Shader> shader;
+        bool                    dirty = true;
     };
 
     void UpdateContext();
+    void CreateShader();
 
     std::unique_ptr<Context> _context;
 };

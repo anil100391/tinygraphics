@@ -4,7 +4,7 @@
 
 #include <glad/glad.h>
 
-#include <shader.h>
+#include <memory>
 #include <renderer.h>
 #include <textrenderer.h>
 #include <utils/meshgl.h>
@@ -84,9 +84,6 @@ void TextRenderer::Draw( const Renderer    &renderer,
     // choose winding such that we don't loose our triangles to back face culling
     const std::vector<unsigned int> conn{ 0, 2, 1, 0, 3, 2 };
     static auto glMesh = std::make_unique<MeshGL>( vertices, layout, conn );
-    static auto shader = std::make_unique<Shader>(
-        std::filesystem::path{ "/home/nebula/code/tinygraphics/shaders/v2t2_vert.glsl" },
-        std::filesystem::path{ "/home/nebula/code/tinygraphics/shaders/v2t2_frag.glsl" } );
 
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -96,8 +93,8 @@ void TextRenderer::Draw( const Renderer    &renderer,
         ndcY = -1.0f + (2.0f * (viewport[3] - py)) / viewport[3];
     };
 
-    shader->Bind();
-    shader->SetUniform1i( "u_Texture", texSlot );
+    _context->shader->Bind();
+    _context->shader->SetUniform1i( "u_Texture", texSlot );
     // assume orthographic projection with units = screen pixels, origin at top
     // left
     float penx = px;
@@ -132,9 +129,9 @@ void TextRenderer::Draw( const Renderer    &renderer,
                                      xmin, ymax, q.s0, q.t1 };
         glMesh->vbo()->BufferData(vertices.data(), static_cast<unsigned int>(vertices.size() * sizeof( float )), GL_DYNAMIC_DRAW);
         // clang-format on
-        shader->SetUniformMat4f( "u_M", glm::mat4( 1.0f ) );
-        shader->SetUniform3f( "u_Color", color );
-        renderer.Draw( *glMesh->vao(), *glMesh->ibo(), *shader );
+        _context->shader->SetUniformMat4f( "u_M", glm::mat4( 1.0f ) );
+        _context->shader->SetUniform3f( "u_Color", color );
+        renderer.Draw( *glMesh->vao(), *glMesh->ibo(), *_context->shader );
     }
 
     glBindTexture( GL_TEXTURE_2D, 0 );
@@ -160,6 +157,8 @@ void TextRenderer::UpdateContext()
     {
         return;
     }
+
+    CreateShader();
 
     std::vector<unsigned char> ttfBuffer( 1 << 20, 0 );
     std::vector<unsigned char> tempBitmap( 512 * 512, 0 );
@@ -208,7 +207,7 @@ void TextRenderer::UpdateContext()
                           _context->fontMetrics );
 
 #if WRITE_FONT_ATLAS
-    std::string output = "/home/nebula/font.png";
+    std::string output = "font.png";
     stbi_write_png( output.c_str(), 512, 512, 1, tempBitmap.data(), 512 );
 #endif // WRITE_FONT_ATLAS
 
@@ -231,4 +230,39 @@ void TextRenderer::UpdateContext()
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
     _context->dirty = false;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void TextRenderer::CreateShader()
+{
+    if ( _context->shader )
+    {
+        return;
+    }
+
+    std::string vshaderSource = 
+                    "#version 330 core\n"
+                    "layout(location = 0) in vec2 position;\n"
+                    "layout(location = 1) in vec2 texCoord;\n"
+                    "out vec2 fragTexCoord;\n"
+                    "uniform mat4 u_M;\n"
+                    "void main()\n"
+                    "{\n"
+                    "    gl_Position = u_M * vec4(position, 0.0, 1.0);\n"
+                    "    fragTexCoord = texCoord;\n"
+                    "}\n";
+
+    std::string fshaderSource = 
+                    "#version 330 core\n"
+                    "in vec2 fragTexCoord;\n"
+                    "uniform sampler2D u_Texture;\n"
+                    "uniform vec3 u_Color;\n"
+                    "void main()\n"
+                    "{\n"
+                    "    float alpha = texture(u_Texture, fragTexCoord).r;\n"
+                    "    gl_FragColor = vec4(u_Color, alpha);\n"
+                    "}\n";
+
+    _context->shader = std::make_unique<Shader>(vshaderSource, fshaderSource);
 }
