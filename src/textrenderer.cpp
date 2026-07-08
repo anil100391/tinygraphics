@@ -1,10 +1,10 @@
 #include <format>
+#include <memory>
 #include <cstring>
-#include <iostream>
 
 #include <glad/glad.h>
 
-#include <memory>
+#include <log.h>
 #include <renderer.h>
 #include <textrenderer.h>
 #include <utils/meshgl.h>
@@ -159,8 +159,7 @@ const TextRenderer::FontResource &TextRenderer::UpdateContext()
         auto file = fopen( fontFile.string().c_str(), "rb" );
         if ( !file )
         {
-            std::cout << std::format(
-                "{:8}: Failed to open {}\n", "Error", fontFile.string() );
+            Log( LogLevel::Error, "Failed to open {}\n", fontFile.string() );
         }
 
         std::fread( ttfBuffer.data(), 1, ttfBuffer.size(), file );
@@ -180,9 +179,7 @@ const TextRenderer::FontResource &TextRenderer::UpdateContext()
     int            ok = stbtt_InitFont( &info, ttfBuffer.data(), 0 );
     if ( !ok )
     {
-        std::cout << std::format( "{:8}: Failed to open {}\n",
-                                  "Error",
-                                  "font initialization failed" );
+        Log( LogLevel::Error, "font initialization failed" );
     }
 
     int texWidth  = 512;

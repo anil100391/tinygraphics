@@ -1,8 +1,6 @@
 #ifndef _framebuffer_h_
 #define _framebuffer_h_
 
-#include <renderer.h>
-
 class FrameBuffer
 {
 public:

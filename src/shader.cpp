@@ -1,10 +1,9 @@
-#include <format>
+#include <tuple>
 #include <fstream>
-#include <iostream>
 
+#include <log.h>
 #include <shader.h>
 #include <renderer.h>
-#include <tuple>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -145,8 +144,7 @@ Shader::ParseShader( const std::filesystem::path &filepath )
     std::ifstream stream( filepath );
     if ( !stream.is_open() )
     {
-        std::cout << std::format(
-            "{:8}: Unable to open {}", "Error", filepath.string() );
+        Log( LogLevel::Error, "Unable to open {}", filepath.string() );
         return std::make_tuple( "", "" );
     }
 
@@ -188,8 +186,7 @@ Shader::ParseShader( const std::filesystem::path &vertexShaderPath,
     std::ifstream vshader( vertexShaderPath );
     if ( !vshader.is_open() )
     {
-        std::cout << std::format(
-            "{:8}: Unable to open {}", "Error", vertexShaderPath.string() );
+        Log( LogLevel::Error, "Unable to open {}", vertexShaderPath.string() );
         return std::make_tuple( "", "" );
     }
 
@@ -203,8 +200,8 @@ Shader::ParseShader( const std::filesystem::path &vertexShaderPath,
     std::ifstream fshader( fragmentShaderPath );
     if ( !fshader.is_open() )
     {
-        std::cout << std::format(
-            "{:8}: Unable to open {}", "Error", fragmentShaderPath.string() );
+        Log(
+            LogLevel::Error, "Unable to open {}", fragmentShaderPath.string() );
         return std::make_tuple( "", "" );
     }
 
@@ -234,10 +231,10 @@ unsigned int Shader::CompileShader( unsigned int       type,
         glGetShaderiv( id, GL_INFO_LOG_LENGTH, &length );
         char *message = (char *)alloca( length * sizeof( char ) );
         glGetShaderInfoLog( id, length, &length, message );
-        std::cout << "Failed to compile "
-                  << ( type == GL_VERTEX_SHADER ? "vertex" : "fragement" )
-                  << " shader!\n";
-        std::cout << message << "\n";
+        Log( LogLevel::Error,
+             "Failed to compile {} shader",
+             ( type == GL_VERTEX_SHADER ? "vertex" : "fragement" ) );
+        // Log( LogLevel::Info, message );
         glDeleteShader( id );
         return 0;
     }

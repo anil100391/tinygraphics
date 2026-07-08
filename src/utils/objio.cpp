@@ -1,7 +1,8 @@
 #include <format>
 #include <string>
 #include <fstream>
-#include <iostream>
+
+#include <log.h>
 #include <utils/objio.h>
 
 // -----------------------------------------------------------------------------
@@ -15,10 +16,9 @@ ObjIO::ObjIO( const std::filesystem::path &meshFile, Mesh &mesh )
 // -----------------------------------------------------------------------------
 bool ObjIO::Populate()
 {
-    if ( !std::filesystem::exists( _meshFile ) ||
-         ( ".obj" != _meshFile.extension() ) )
+    if ( ".obj" != _meshFile.extension() )
     {
-        std::cout << std::format( "{:8}: Wrong parser\n", "ERROR" );
+        Log( LogLevel::Error, "Wrong parser" );
         return false;
     }
 
@@ -34,12 +34,11 @@ bool ObjIO::PopulateFromObj()
     std::ifstream f( _meshFile );
     if ( !f.is_open() )
     {
-        std::cout << std::format(
-            "{:8}: Unable to open {}\n", "ERROR", _meshFile.string() );
+        Log( LogLevel::Error, "Unable to open {}", _meshFile.string() );
+        return false;
     }
 
-    std::cout << std::format(
-        "{:8}: Parsing {}\n", "INFO", _meshFile.string() );
+    Log( LogLevel::Info, "Parsing {}", _meshFile.string() );
 
     std::string line;
     while ( std::getline( f, line ) )
@@ -47,10 +46,10 @@ bool ObjIO::PopulateFromObj()
         ParseLine( line );
     }
 
-    std::cout << std::format( "{:8}: Done... {} vertices, {} triangles\n",
-                              "INFO",
-                              _mesh._vertices.size() / 3,
-                              _mesh._trias.size() );
+    Log( LogLevel::Info,
+         "Done... {} vertices, {} triangles",
+         _mesh._vertices.size() / 3,
+         _mesh._trias.size() );
 
     return true;
 }

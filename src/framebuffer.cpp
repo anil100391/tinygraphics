@@ -1,5 +1,7 @@
 #include <framebuffer.h>
-#include <iostream>
+
+#include <log.h>
+#include <glad/glad.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -32,7 +34,7 @@ FrameBuffer::FrameBuffer()
     // Sanity check
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
-        std::cout << "ERROR::INCOMPLE FRAMEBUFFER!\n";
+        Log(LogLevel::Error, "ERROR::INCOMPLE FRAMEBUFFER!" );
     }
 
     // unbind the framebuffer so that we don't accidently draw to it

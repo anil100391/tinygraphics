@@ -1,6 +1,6 @@
 #include <app.h>
 
-#include <iostream>
+#include <log.h>
 #include <string>
 
 #include <events/keyevent.h>
@@ -49,9 +49,7 @@ void KeyCallback( GLFWwindow *window,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MouseMoveCallback( GLFWwindow *window,
-                        double      xpos,
-                        double      ypos )
+void MouseMoveCallback( GLFWwindow *window, double xpos, double ypos )
 {
     auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
     MouseMoveEvent evt( (int)xpos, (int)ypos );
@@ -60,10 +58,7 @@ void MouseMoveCallback( GLFWwindow *window,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MouseButtonCallback( GLFWwindow *window,
-                          int         button,
-                          int         action,
-                          int         mods )
+void MouseButtonCallback( GLFWwindow *window, int button, int action, int mods )
 {
     auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
 
@@ -73,85 +68,78 @@ void MouseButtonCallback( GLFWwindow *window,
 
     if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS )
     {
-        MousePressedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::RIGHT );
+        MousePressedEvent evt(
+            (int)xpos, (int)ypos, MouseEvent::Button::RIGHT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::RIGHT );
+        MouseReleasedEvent evt(
+            (int)xpos, (int)ypos, MouseEvent::Button::RIGHT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS )
     {
-        MousePressedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::LEFT );
+        MousePressedEvent evt( (int)xpos, (int)ypos, MouseEvent::Button::LEFT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::LEFT );
+        MouseReleasedEvent evt(
+            (int)xpos, (int)ypos, MouseEvent::Button::LEFT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS )
     {
-        MousePressedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::MIDDLE );
+        MousePressedEvent evt(
+            (int)xpos, (int)ypos, MouseEvent::Button::MIDDLE );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt( (int)xpos,
-                               (int)ypos, MouseEvent::Button::MIDDLE );
+        MouseReleasedEvent evt(
+            (int)xpos, (int)ypos, MouseEvent::Button::MIDDLE );
         app->OnEvent( evt );
     }
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MouseScrollCallback( GLFWwindow *window,
-                          double xoffset,
-                          double yoffset )
+void MouseScrollCallback( GLFWwindow *window, double xoffset, double yoffset )
 {
     auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
 
     double xpos, ypos;
     glfwGetCursorPos( window, &xpos, &ypos );
 
-    MouseScrollEvent evt( static_cast<int>(xpos), static_cast<int>(ypos),
-                          xoffset, yoffset );
-    app->OnEvent(evt);
+    MouseScrollEvent evt(
+        static_cast<int>( xpos ), static_cast<int>( ypos ), xoffset, yoffset );
+    app->OnEvent( evt );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void WindowResizeCallback(GLFWwindow *window, int width, int height)
+void WindowResizeCallback( GLFWwindow *window, int width, int height )
 {
-    glViewport(0, 0, width, height);
-    WindowResizeEvent evt(width, height);
+    glViewport( 0, 0, width, height );
+    WindowResizeEvent evt( width, height );
     auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
-    app->OnEvent(evt);
+    app->OnEvent( evt );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 WindowProperties::WindowProperties( unsigned int w,
                                     unsigned int h,
-                                    const char *title,
-                                    bool maximized )
-    : _width(w),
-      _height(h),
-      _title(title),
-      _maximized(maximized)
+                                    const char  *title,
+                                    bool         maximized )
+    : _width( w ), _height( h ), _title( title ), _maximized( maximized )
 {
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Application::Application( const WindowProperties &wprops,
-                          bool initDearImGui )
+Application::Application( const WindowProperties &wprops, bool initDearImGui )
 {
     if ( !glfwInit() )
         return;
@@ -162,15 +150,25 @@ Application::Application( const WindowProperties &wprops,
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        io.ConfigFlags |=
+            ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+        io.ConfigFlags |=
+            ImGuiConfigFlags_DockingEnable; // IF using Docking Branch
 
         // Setup scaling
-        scale = ImGui_ImplGlfw_GetContentScaleForMonitor( glfwGetPrimaryMonitor() );
+        scale =
+            ImGui_ImplGlfw_GetContentScaleForMonitor( glfwGetPrimaryMonitor() );
         ImGuiStyle &style = ImGui::GetStyle();
-        style.ScaleAllSizes( scale );   // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-        style.FontScaleDpi = scale;     // Set initial font scale. (in docking branch: using io.ConfigDpiScaleFonts=true automatically overrides this for every window depending on the current monitor)
+        style.ScaleAllSizes(
+            scale ); // Bake a fixed style scale. (until we have a solution for
+                     // dynamic style scaling, changing this requires resetting
+                     // Style + calling this again)
+        style.FontScaleDpi =
+            scale; // Set initial font scale. (in docking branch: using
+                   // io.ConfigDpiScaleFonts=true automatically overrides this
+                   // for every window depending on the current monitor)
     }
 
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
@@ -197,9 +195,9 @@ Application::Application( const WindowProperties &wprops,
     glfwSwapInterval( 1 );
     glfwMakeContextCurrent( _window );
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    if ( !gladLoadGLLoader( (GLADloadproc)glfwGetProcAddress ) )
     {
-        std::cout << "Failed to initialize GLAD\n";
+        Log( LogLevel::Error, "Failed to initialize GLAD" );
         return;
     }
 
@@ -218,7 +216,9 @@ Application::Application( const WindowProperties &wprops,
     if ( initDearImGui )
     {
         // Setup Platform/Renderer backends
-        ImGui_ImplGlfw_InitForOpenGL( _window, true );          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+        ImGui_ImplGlfw_InitForOpenGL(
+            _window, true ); // Second param install_callback=true will install
+                             // GLFW callbacks and chain to existing ones.
         ImGui_ImplOpenGL3_Init();
     }
 }
@@ -248,16 +248,16 @@ void Application::Update()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Application::GetWindowSize(int &width, int &height) const noexcept
+void Application::GetWindowSize( int &width, int &height ) const noexcept
 {
-    glfwGetWindowSize(_window, &width, &height);
+    glfwGetWindowSize( _window, &width, &height );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 float Application::GetCurrentTime() const noexcept
 {
-    return static_cast<float>(glfwGetTime());
+    return static_cast<float>( glfwGetTime() );
 }
 
 // -----------------------------------------------------------------------------
@@ -278,7 +278,7 @@ bool Application::OnEvent( Event &evt )
 // -----------------------------------------------------------------------------
 void Application::Run()
 {
-    while ( !glfwWindowShouldClose(_window) )
+    while ( !glfwWindowShouldClose( _window ) )
     {
         Update();
     }

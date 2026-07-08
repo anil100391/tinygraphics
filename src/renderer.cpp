@@ -1,5 +1,4 @@
-#include <iostream>
-
+#include <log.h>
 #include <renderer.h>
 #include <textrenderer.h>
 
@@ -18,8 +17,12 @@ bool GLLogCall( const char *function, const char *file, int line )
 {
     while ( GLenum error = glGetError() )
     {
-        std::cout << "[OpenGL Error] (" << error << "):" << function << " "
-                  << file << ": " << line << "\n";
+        Log( LogLevel::Warning,
+             "[OpenGL Error] ({}): {} {}: {}",
+             error,
+             function,
+             file,
+             line );
         return false;
     }
 
