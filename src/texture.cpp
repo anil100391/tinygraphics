@@ -13,7 +13,7 @@ Texture::Texture( const std::filesystem::path &filePath )
     stbi_set_flip_vertically_on_load( 1 );
     auto channelsPerPixel = -1;
     auto localBuffer =
-        stbi_load( filePath.c_str(), &_width, &_height, &channelsPerPixel, 4 );
+        stbi_load( filePath.string().c_str(), &_width, &_height, &channelsPerPixel, 4 );
 
     Create( localBuffer, _width, _height, 4 );
 
