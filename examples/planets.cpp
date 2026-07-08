@@ -129,17 +129,28 @@ void PlanetExplorer::Render()
     static Renderer r;
     r.Draw( *_glMesh->vao(), *_glMesh->ibo(), *_shader );
 
-    r.DrawText( "MARS (Planet)", 32, 32 );
-    r.DrawText( "Diameter:          6794 km", 32, 64 );
-    r.DrawText( "Distance from Sun: 228 million km (1.52 AU)", 32, 96 );
-    r.DrawText( "Year Length:       687 Earth Days", 32, 128 );
-    r.DrawText( "Day Length:        24.6 Hours", 32, 160 );
-    r.DrawText( "Axial Tilt:        25.19 degrees", 32, 192 );
-    r.DrawText( "Surface Gravity:   3.71 m/(s*s)", 32, 224 );
+    glm::vec3 titleColor = glm::vec3( 0.0f, 0.8f, 0.8f );
+    glm::vec3 descColor  = glm::vec3( 0.8f, 0.8f, 0.0f );
+
+    unsigned int ypos = 0;
+    r.SetFontSize( 32.0f );
+    r.DrawText( "MARS (Planet)", 32, ypos += 32, titleColor );
+
+    r.SetFontSize( 24.0f );
+    r.DrawText( "Diameter:          6794 km", 32, ypos += 24, descColor );
+    r.DrawText( "Distance from Sun: 228 million km (1.52 AU)",
+                32,
+                ypos += 24,
+                descColor );
+    r.DrawText(
+        "Year Length:       687 Earth Days", 32, ypos += 24, descColor );
+    r.DrawText( "Day Length:        24.6 Hours", 32, ypos += 24, descColor );
+    r.DrawText( "Axial Tilt:        25.19 degrees", 32, ypos += 24, descColor );
+    r.DrawText( "Surface Gravity:   3.71 m/(s*s)", 32, ypos += 24, descColor );
 
     auto fps =
         std::format( "FPS: {}", static_cast<int>( ImGui::GetIO().Framerate ) );
-    r.DrawText( fps, width - 128, 32 );
+    r.DrawText( fps, width - 128, 32, glm::vec3( 0.5f, 0.5f, 0.5f ) );
 }
 
 // -----------------------------------------------------------------------------

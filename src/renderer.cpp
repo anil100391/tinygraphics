@@ -30,7 +30,7 @@ bool GLLogCall( const char *function, const char *file, int line )
 // -----------------------------------------------------------------------------
 Renderer::~Renderer()
 {
-    delete _fontRenderer;
+    delete _textRenderer;
 }
 
 // -----------------------------------------------------------------------------
@@ -102,19 +102,41 @@ void Renderer::Draw( const VertexArray &va,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+void Renderer::SetFont( const std::filesystem::path &fontFile )
+{
+    GetOrCreateTextRenderer()->SetFont( fontFile );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void Renderer::SetFontSize( float fontSize )
+{
+    GetOrCreateTextRenderer()->SetFontSize( fontSize );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void Renderer::DrawText( const std::string &text,
                          unsigned int       px,
-                         unsigned int       py )
+                         unsigned int       py,
+                         const glm::vec3   &color )
 {
     if ( text.empty() )
     {
         return;
     }
 
-    if ( !_fontRenderer )
+    GetOrCreateTextRenderer()->Draw( *this, text, px, py, color );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+TextRenderer *Renderer::GetOrCreateTextRenderer()
+{
+    if ( !_textRenderer )
     {
-        _fontRenderer = new TextRenderer();
+        _textRenderer = new TextRenderer();
     }
 
-    _fontRenderer->Draw( *this, text, px, py );
+    return _textRenderer;
 }

@@ -52,8 +52,11 @@ public:
 
     // text rendering
     void SetFont( const std::filesystem::path &fontFile );
-    void SetfontSize( float fontSize );
-    void DrawText( const std::string &text, unsigned int px, unsigned int py );
+    void SetFontSize( float fontSize );
+    void DrawText( const std::string &text,
+                   unsigned int       px,
+                   unsigned int       py,
+                   const glm::vec3   &color = { 0.7f, 0.7f, 0.0f } );
 
 private:
     GLenum GetGLDrawMode( DRAW_MODE dm ) const;
@@ -63,7 +66,8 @@ private:
                  unsigned int       instanceCount,
                  DRAW_MODE          dm ) const;
 
-    TextRenderer *_fontRenderer = nullptr;
+    TextRenderer *GetOrCreateTextRenderer();
+    TextRenderer *_textRenderer = nullptr;
 };
 
 #endif // _renderer_h_
