@@ -139,11 +139,38 @@ WindowProperties::WindowProperties( unsigned int w,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+static void LogDeviceInfo()
+{
+    const GLubyte *renderer = glGetString( GL_RENDERER ); // gpu card
+    const GLubyte *vendor   = glGetString( GL_VENDOR );   // driver vendor
+    const GLubyte *version = glGetString( GL_VERSION ); // opengl/driver version
+    const GLubyte *glslVersion =
+        glGetString( GL_SHADING_LANGUAGE_VERSION ); // glsl version
+
+    Log(
+        LogLevel::Info,
+        "GPU / Renderer: {}",
+        ( renderer ? reinterpret_cast<const char *>( renderer ) : "Unknown" ) );
+    Log( LogLevel::Info,
+         "Vendor:         {}",
+         ( vendor ? reinterpret_cast<const char *>( vendor ) : "Unknown" ) );
+    Log( LogLevel::Info,
+         "OpenGL Version: {}",
+         ( version ? reinterpret_cast<const char *>( version ) : "Unknown" ) );
+    Log( LogLevel::Info,
+         "GLSL Version:   {}",
+         ( glslVersion ? reinterpret_cast<const char *>( glslVersion )
+                       : "Unknown" ) );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 Application::Application( const WindowProperties &wprops, bool initDearImGui )
 {
     if ( !glfwInit() )
         return;
 
+    Log( LogLevel::Info, "Initialized GLFW" );
     float scale = 1.0f;
     if ( initDearImGui )
     {
@@ -195,11 +222,16 @@ Application::Application( const WindowProperties &wprops, bool initDearImGui )
     glfwSwapInterval( 1 );
     glfwMakeContextCurrent( _window );
 
+    Log( LogLevel::Info, "GLFW window created" );
+
     if ( !gladLoadGLLoader( (GLADloadproc)glfwGetProcAddress ) )
     {
         Log( LogLevel::Error, "Failed to initialize GLAD" );
         return;
     }
+
+    Log( LogLevel::Info, "OpenGL context created" );
+    LogDeviceInfo();
 
     // Callbacks
     glfwSetKeyCallback( _window, KeyCallback );
