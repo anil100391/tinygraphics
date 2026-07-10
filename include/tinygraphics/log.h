@@ -56,14 +56,17 @@ inline std::string TimeStamp()
     auto        now = std::chrono::system_clock::now();
     std::time_t t   = std::chrono::system_clock::to_time_t( now );
 
+    std::stringstream ss;
+
     std::tm tm{};
 #if defined( _WIN32 )
     localtime_s( &tm, &t );
 #else
     localtime_r( &t, &tm );
+    ss << "\U0001f559 ";
 #endif
-    std::stringstream ss;
-    ss << "\U0001f559 " << std::put_time( &tm, "%H:%M:%S" );
+
+    ss << std::put_time( &tm, "%H:%M:%S" );
     return ss.str();
 }
 
