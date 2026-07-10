@@ -37,13 +37,13 @@ inline constexpr std::string_view ToString( LogLevel lvl )
     switch ( lvl )
     {
     case LogLevel::Debug:
-        return "\033[1mDEBUG  \033[0m";
+        return "\033[1mDEBUG \033[0m";
     case LogLevel::Info:
-        return "\033[1;32mINFO   \033[0m";
+        return "\033[1;32mINFO  \033[0m";
     case LogLevel::Warning:
-        return "\033[1;35mWARNING\033[0m";
+        return "\033[1;35mWARN  \033[0m";
     case LogLevel::Error:
-        return "\033[1;31mERROR  \033[0m";
+        return "\033[1;31mERROR \033[0m";
     }
 
     return "UNKNOWN";
@@ -63,7 +63,7 @@ inline std::string TimeStamp()
     localtime_r( &t, &tm );
 #endif
     std::stringstream ss;
-    ss << std::put_time( &tm, "%H:%M:%S" );
+    ss << "\U0001f559 " << std::put_time( &tm, "%H:%M:%S" );
     return ss.str();
 }
 
@@ -76,6 +76,6 @@ inline void Log( LogLevel lvl, std::string_view fmt, Args &&...args )
                             ? std::cerr
                             : std::cout;
 
-    out << TimeStamp() << "  " << ToString( lvl ) << "  :  "
+    out << ToString( lvl ) << TimeStamp() << " : "
         << std::vformat( fmt, std::make_format_args( args... ) ) << "\n";
 }
