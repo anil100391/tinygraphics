@@ -1,23 +1,40 @@
-if (ENABLE_UTILS)
-  find_package(assimp CONFIG REQUIRED)
+if (WIN32)
+    set(CMAKE_PREFIX_PATH APPEND ${PROJECT_SOURCE_DIR}/tools/bin/win64)
+elseif(UNIX)
+    set(CMAKE_PREFIX_PATH APPEND ${PROJECT_SOURCE_DIR}/tools/bin/linux64)
 endif()
 
-file (GLOB utils_src
+find_program(ASSET2CPP asset2cpp REQUIRED)
+
+set(DEFAULT_FONT_TTF ${CMAKE_SOURCE_DIR}/fonts/JetBrainsMonoNLNerdFontMono_Thin.ttf)
+set(DEFAULT_FONT_CPP ${CMAKE_BINARY_DIR}/generated/default_font.cpp)
+
+add_custom_command(
+    OUTPUT ${DEFAULT_FONT_CPP}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated
+    COMMAND ${ASSET2CPP} ${DEFAULT_FONT_TTF} ${DEFAULT_FONT_CPP}
+    DEPENDS ${DEFAULT_FONT_TTF}
+    COMMENT "Generating default_font.cpp"
+    VERBATIM)
+
+set(utils_src
     "${PROJECT_SOURCE_DIR}/src/utils/mesh.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshbufferobjects.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/objio.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/meshgl.cpp")
 
-file (GLOB core_src "${PROJECT_SOURCE_DIR}/src/app.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/camera.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/cubemap.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/framebuffer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/indexbuffer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/renderer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/shader.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/texture.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/vertexarray.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/vertexbuffer.cpp"
-                    "${PROJECT_SOURCE_DIR}/src/stb_image.cpp")
+set(core_src "${DEFAULT_FONT_CPP}"
+             "${PROJECT_SOURCE_DIR}/src/app.cpp"
+             "${PROJECT_SOURCE_DIR}/src/camera.cpp"
+             "${PROJECT_SOURCE_DIR}/src/cubemap.cpp"
+             "${PROJECT_SOURCE_DIR}/src/framebuffer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/indexbuffer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/renderer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/textrenderer.cpp"
+             "${PROJECT_SOURCE_DIR}/src/shader.cpp"
+             "${PROJECT_SOURCE_DIR}/src/texture.cpp"
+             "${PROJECT_SOURCE_DIR}/src/vertexarray.cpp"
+             "${PROJECT_SOURCE_DIR}/src/vertexbuffer.cpp")
 
 set(imgui_src
     "${PROJECT_SOURCE_DIR}/third_party/imgui/imgui.cpp"
@@ -28,8 +45,13 @@ set(imgui_src
     "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_glfw.cpp"
     "${PROJECT_SOURCE_DIR}/third_party/imgui/backends/imgui_impl_opengl3.cpp")
 
+set(stb_src
+    "${PROJECT_SOURCE_DIR}/src/stb/stb_image.cpp"
+    "${PROJECT_SOURCE_DIR}/src/stb/stb_image_write.cpp"
+    "${PROJECT_SOURCE_DIR}/src/stb/stb_truetype.cpp")
+
 # Embed GLFW and dearimgui object files into tinygraphics
-add_library (tinygraphics STATIC ${utils_src} ${core_src} ${imgui_src} $<TARGET_OBJECTS:glfw>)
+add_library (tinygraphics STATIC ${utils_src} ${core_src} ${imgui_src} ${stb_src} $<TARGET_OBJECTS:glfw>)
 
 #################################################################################
 # Debug Symbols
@@ -65,8 +87,12 @@ endif()
 
 
 # Include GLFW headers privately (not exported to users)
-target_include_directories(tinygraphics PRIVATE 
+target_include_directories(tinygraphics PRIVATE
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glfw/include>)
+
+# Include stb headers privately (not exported to users)
+target_include_directories(tinygraphics PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/stb>)
 
 target_include_directories(tinygraphics PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui>
@@ -94,7 +120,6 @@ target_sources(tinygraphics PUBLIC FILE_SET HEADERS
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/light.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/renderer.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/shader.h"
-        "${PROJECT_SOURCE_DIR}/include/tinygraphics/stb_image.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/texture.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/vertexarray.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/vertexbuffer.h"
@@ -106,7 +131,10 @@ target_sources(tinygraphics PUBLIC FILE_SET HEADERS
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/utils/bbox.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/utils/mesh.h"
         "${PROJECT_SOURCE_DIR}/include/tinygraphics/utils/meshbufferobjects.h"
-        "${PROJECT_SOURCE_DIR}/include/tinygraphics/utils/meshgl.h")
+        "${PROJECT_SOURCE_DIR}/include/tinygraphics/utils/meshgl.h"
+        "${PROJECT_SOURCE_DIR}/include/tinygraphics/stb/stb_image.h"
+        "${PROJECT_SOURCE_DIR}/include/tinygraphics/stb/stb_image_write.h"
+        "${PROJECT_SOURCE_DIR}/include/tinygraphics/stb/stb_truetype.h")
 
 include(GNUInstallDirs)
 
@@ -141,7 +169,8 @@ install(FILES ${imgui_backend_headers}
     DESTINATION include/imgui/backends)
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/shaders"
     DESTINATION .)
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/fonts"
+    DESTINATION .)
 
 install(FILES "tinygraphicsConfig.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tinygraphics)
-

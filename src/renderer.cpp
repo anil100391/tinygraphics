@@ -1,5 +1,6 @@
+#include <log.h>
 #include <renderer.h>
-#include <iostream>
+#include <textrenderer.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -12,11 +13,16 @@ void GLClearError()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool GLLogCall(const char* function, const char* file, int line)
+bool GLLogCall( const char *function, const char *file, int line )
 {
-    while(GLenum error = glGetError())
+    while ( GLenum error = glGetError() )
     {
-        std::cout << "[OpenGL Error] (" << error << "):" << function << " " << file << ": " << line << "\n";
+        Log( LogLevel::Warning,
+             "[OpenGL Error] ({}): {} {}: {}",
+             error,
+             function,
+             file,
+             line );
         return false;
     }
 
@@ -25,17 +31,24 @@ bool GLLogCall(const char* function, const char* file, int line)
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+Renderer::~Renderer()
+{
+    delete _textRenderer;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void Renderer::Clear() const
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear( GL_COLOR_BUFFER_BIT );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void Renderer::Draw( const VertexArray &va,
                      const IndexBuffer &ib,
-                     const Shader &shader,
-                     DRAW_MODE dm ) const
+                     const Shader      &shader,
+                     DRAW_MODE          dm ) const
 {
     Draw( va, ib, shader, 0, dm );
 }
@@ -44,9 +57,9 @@ void Renderer::Draw( const VertexArray &va,
 // -----------------------------------------------------------------------------
 void Renderer::DrawInstanced( const VertexArray &va,
                               const IndexBuffer &ib,
-                              const Shader &shader,
-                              unsigned int count,
-                              DRAW_MODE dm ) const
+                              const Shader      &shader,
+                              unsigned int       count,
+                              DRAW_MODE          dm ) const
 {
     Draw( va, ib, shader, count, dm );
 }
@@ -55,11 +68,14 @@ void Renderer::DrawInstanced( const VertexArray &va,
 // -----------------------------------------------------------------------------
 GLenum Renderer::GetGLDrawMode( DRAW_MODE dm ) const
 {
-    switch (dm)
+    switch ( dm )
     {
-        case DRAW_MODE::TRIANGLES: return GL_TRIANGLES;
-        case DRAW_MODE::LINES:     return GL_LINES;
-        default:                   return GL_INVALID_ENUM;
+    case DRAW_MODE::TRIANGLES:
+        return GL_TRIANGLES;
+    case DRAW_MODE::LINES:
+        return GL_LINES;
+    default:
+        return GL_INVALID_ENUM;
     }
 }
 
@@ -67,9 +83,9 @@ GLenum Renderer::GetGLDrawMode( DRAW_MODE dm ) const
 // -----------------------------------------------------------------------------
 void Renderer::Draw( const VertexArray &va,
                      const IndexBuffer &ib,
-                     const Shader &shader,
-                     unsigned int instanceCount,
-                     DRAW_MODE dm ) const
+                     const Shader      &shader,
+                     unsigned int       instanceCount,
+                     DRAW_MODE          dm ) const
 {
     va.Bind();
     ib.Bind();
@@ -82,6 +98,48 @@ void Renderer::Draw( const VertexArray &va,
     }
     else
     {
-        glDrawElementsInstanced( mode, ib.GetCount(), GL_UNSIGNED_INT, nullptr, instanceCount );
+        glDrawElementsInstanced(
+            mode, ib.GetCount(), GL_UNSIGNED_INT, nullptr, instanceCount );
     }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void Renderer::SetFont( const std::filesystem::path &fontFile )
+{
+    GetOrCreateTextRenderer()->SetFont( fontFile );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void Renderer::SetFontSize( float fontSize )
+{
+    GetOrCreateTextRenderer()->SetFontSize( fontSize );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void Renderer::DrawText( const std::string &text,
+                         unsigned int       px,
+                         unsigned int       py,
+                         const glm::vec3   &color )
+{
+    if ( text.empty() )
+    {
+        return;
+    }
+
+    GetOrCreateTextRenderer()->Draw( *this, text, px, py, color );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+TextRenderer *Renderer::GetOrCreateTextRenderer()
+{
+    if ( !_textRenderer )
+    {
+        _textRenderer = new TextRenderer();
+    }
+
+    return _textRenderer;
 }

@@ -111,7 +111,7 @@ private:
     glm::vec3           _position;
     glm::vec3           _lookAt;
     glm::vec3           _upVec = glm::vec3(0.0f, 0.0f, 1.0f);
-    float               _fov = std::numbers::pi / 2; // radians
+    float               _fov = std::numbers::pi_v<float> / 2; // radians
 
     glm::mat4           _viewMatrix;
     bool                _viewDirty = true;

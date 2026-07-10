@@ -8,6 +8,7 @@ imgui.ini
 build
 ctags
 compile_commands.json
+CMakePresets.json
 /CMakeSettings.json
 tags
 CMakeLists.txt.user
