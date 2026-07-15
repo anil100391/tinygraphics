@@ -1,4 +1,3 @@
-#include <format>
 #include <memory>
 #include <cstring>
 
@@ -203,7 +202,7 @@ const tgrTextRenderer::FontResource &tgrTextRenderer::UpdateContext()
 
     fontResource.shader  = GetOrCreateShader();
     fontResource.texture = std::make_unique<tgrTexture>(
-        tempBitmap.data(), texWidth, texHeight, 1 );
+        tempBitmap.data(), texWidth, texHeight, GL_RED );
 
     return fontResource;
 }

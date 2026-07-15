@@ -15,7 +15,7 @@ public:
     tgrTexture( const unsigned char *pixels,
                 int                  width,
                 int                  height,
-                int                  channelsPerPixel );
+                unsigned int         format /*textures internal format*/ );
 
     ~tgrTexture();
 
@@ -41,7 +41,7 @@ private:
     void Create( const unsigned char *pixels,
                  int                  width,
                  int                  height,
-                 int                  channelsPerPixel );
+                 unsigned int         format );
 
     unsigned int _rendererID = 0;
     int          _width      = -1;
