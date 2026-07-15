@@ -15,7 +15,7 @@ Texture::Texture( const std::filesystem::path &filePath )
     auto localBuffer =
         stbi_load( filePath.string().c_str(), &_width, &_height, &channelsPerPixel, 4 );
 
-    Create( localBuffer, _width, _height, 4 );
+    Create( localBuffer, _width, _height, GL_RGBA );
 
     if ( localBuffer )
     {
@@ -28,10 +28,10 @@ Texture::Texture( const std::filesystem::path &filePath )
 Texture::Texture( const unsigned char *pixels,
                   int                  width,
                   int                  height,
-                  int                  channelsPerPixel )
+                  unsigned int         format )
     : _width( width ), _height( height )
 {
-    Create( pixels, _width, _height, channelsPerPixel );
+    Create( pixels, _width, _height, format );
 }
 
 // -----------------------------------------------------------------------------
@@ -39,7 +39,7 @@ Texture::Texture( const unsigned char *pixels,
 void Texture::Create( const unsigned char *pixels,
                       int                  width,
                       int                  height,
-                      int                  channelsPerPixel )
+                      unsigned int         format )
 {
     glGenTextures( 1, &_rendererID );
     glBindTexture( GL_TEXTURE_2D, _rendererID );
@@ -49,29 +49,13 @@ void Texture::Create( const unsigned char *pixels,
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-    GLint  internalFormat = GL_RGBA;
-    GLenum format         = GL_RGBA;
-    switch ( channelsPerPixel )
+    GLint  internalFormat = format;
+    GLenum type           = GL_UNSIGNED_BYTE;
+
+    // Depth textures need a floating point type, not unsigned byte.
+    if ( format == GL_DEPTH_COMPONENT )
     {
-    case 1:
-        internalFormat = GL_RED;
-        format         = GL_RED;
-        break;
-    case 2:
-        internalFormat = GL_RG;
-        format         = GL_RG;
-        break;
-    case 3:
-        internalFormat = GL_RGB;
-        format         = GL_RGB;
-        break;
-    case 4:
-        internalFormat = GL_RGBA;
-        format         = GL_RGBA;
-        break;
-    default:
-        assert( false );
-        break;
+        type = GL_FLOAT;
     }
 
     glTexImage2D( GL_TEXTURE_2D,
@@ -81,7 +65,7 @@ void Texture::Create( const unsigned char *pixels,
                   height,
                   0,
                   format,
-                  GL_UNSIGNED_BYTE,
+                  type,
                   pixels );
 
     glBindTexture( GL_TEXTURE_2D, 0 );

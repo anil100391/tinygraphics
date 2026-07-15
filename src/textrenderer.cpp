@@ -1,4 +1,3 @@
-#include <format>
 #include <memory>
 #include <cstring>
 
@@ -201,9 +200,9 @@ const TextRenderer::FontResource &TextRenderer::UpdateContext()
     stbi_write_png( output.c_str(), 512, 512, 1, tempBitmap.data(), 512 );
 #endif // WRITE_FONT_ATLAS
 
-    fontResource.shader = GetOrCreateShader();
-    fontResource.texture =
-        std::make_unique<Texture>( tempBitmap.data(), texWidth, texHeight, 1 );
+    fontResource.shader  = GetOrCreateShader();
+    fontResource.texture = std::make_unique<Texture>(
+        tempBitmap.data(), texWidth, texHeight, GL_RED );
 
     return fontResource;
 }
