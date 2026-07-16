@@ -109,6 +109,7 @@ void PlanetExplorer::Render()
 
     glm::vec3 lightPos = _camera.GetPosition();
     _shader->SetUniform3f( "u_LightPos", lightPos );
+    _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
 
     glm::mat4 model = glm::rotate(
         glm::mat4( 1.0f ), _rotation, glm::vec3( 0.0f, 0.0f, 1.0f ) );
