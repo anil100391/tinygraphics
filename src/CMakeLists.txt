@@ -72,6 +72,7 @@ endif()
 #################################################################################
 
 target_link_libraries (tinygraphics PRIVATE OpenGL::GL glad)
+target_link_libraries (tinygraphics PUBLIC glad)
 
 # Link against GLFW's platform dependencies (not GLFW itself, since its
 # object files are already embedded). Use plain library names instead of
