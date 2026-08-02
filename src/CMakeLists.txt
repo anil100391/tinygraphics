@@ -6,7 +6,7 @@ endif()
 
 find_program(ASSET2CPP asset2cpp REQUIRED)
 
-set(DEFAULT_FONT_TTF ${CMAKE_SOURCE_DIR}/fonts/JetBrainsMonoNLNerdFontMono_Thin.ttf)
+set(DEFAULT_FONT_TTF ${PROJECT_SOURCE_DIR}/fonts/JetBrainsMonoNLNerdFontMono_Thin.ttf)
 set(DEFAULT_FONT_CPP ${CMAKE_BINARY_DIR}/generated/default_font.cpp)
 
 add_custom_command(
@@ -92,17 +92,17 @@ target_include_directories(tinygraphics PRIVATE
 
 # Include stb headers privately (not exported to users)
 target_include_directories(tinygraphics PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/stb>)
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/stb>)
 
 target_include_directories(tinygraphics PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/imgui/backends>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/imgui>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/imgui/backends>
     $<INSTALL_INTERFACE:include/imgui>
     $<INSTALL_INTERFACE:include/imgui/backends>)
 
 target_include_directories(tinygraphics
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glm>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/glm>
         $<INSTALL_INTERFACE:include>)
 
 target_include_directories(tinygraphics PUBLIC
