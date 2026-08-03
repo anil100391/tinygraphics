@@ -32,7 +32,7 @@ tgrTexture::tgrTexture( const unsigned char *pixels,
                         int                  height,
                         int                  channelsPerPixel )
 {
-    Create( pixels, _width, _height, channelsPerPixel );
+    Create( pixels, width, height, channelsPerPixel );
 }
 
 // -----------------------------------------------------------------------------
@@ -82,6 +82,8 @@ void tgrTexture::Update( const unsigned char *pixels,
                          int                  height,
                          int                  channelsPerPixel )
 {
+    _width  = width;
+    _height = height;
     glBindTexture( GL_TEXTURE_2D, _rendererID );
 
     GLint  internalFormat = GL_RGBA;

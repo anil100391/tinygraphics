@@ -89,7 +89,7 @@ endif()
 
 # Include GLFW headers privately (not exported to users)
 target_include_directories(tinygraphics PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/glfw/include>)
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/glfw/include>)
 
 # Include stb headers privately (not exported to users)
 target_include_directories(tinygraphics PRIVATE
