@@ -10,30 +10,28 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class PlanetExplorer : public Application
+class PlanetExplorer : public tgrApplication
 {
 public:
-
-    PlanetExplorer( const WindowProperties &wprops );
+    PlanetExplorer( const tgrWindowProperties &wprops );
     virtual ~PlanetExplorer() = default;
 
     virtual void Update() override;
-    virtual bool OnEvent( Event &evt ) override;
+    virtual bool OnEvent( tgrEvent &evt ) override;
 
 private:
-
     void Render();
 
     void CreatePlanet();
     void CreateShader();
 
-    std::unique_ptr<MeshGL>  _glMesh;
-    std::unique_ptr<Shader>  _shader;
-    std::unique_ptr<Texture> _texture;
-    std::unique_ptr<Texture> _normalMap;
+    std::unique_ptr<tgrMeshGL>     _glMesh;
+    std::unique_ptr<tgrShader>  _shader;
+    std::unique_ptr<tgrTexture> _texture;
+    std::unique_ptr<tgrTexture> _normalMap;
 
-    Camera _camera;
+    tgrCamera _camera;
 
-    float  _rotation = 0.0f;
-    bool   _running  = true;
+    float _rotation = 0.0f;
+    bool  _running  = true;
 };

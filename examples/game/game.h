@@ -7,26 +7,25 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Game : public Application
+class Game : public tgrApplication
 {
 public:
-
-    Game(const WindowProperties &wprops, const std::filesystem::path &exeDir);
+    Game( const tgrWindowProperties   &wprops,
+          const std::filesystem::path &exeDir );
     virtual ~Game() = default;
 
     virtual void Update() override;
-    virtual bool OnEvent(Event &evt) override;
+    virtual bool OnEvent( tgrEvent &evt ) override;
 
 private:
-
     void SetupCamera();
     void SetupGeometry();
     void SetupShader();
 
-    Camera                  _camera;
-    std::unique_ptr<Shader> _shader; 
-    std::unique_ptr<MeshGL> _glMesh; 
-    std::filesystem::path   _exeDir;
+    tgrCamera                  _camera;
+    std::unique_ptr<tgrShader> _shader;
+    std::unique_ptr<tgrMeshGL>    _glMesh;
+    std::filesystem::path      _exeDir;
 
-    std::string             _fragmentShaderSource;
+    std::string _fragmentShaderSource;
 };

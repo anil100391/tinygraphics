@@ -2,25 +2,29 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-MeshGL::MeshGL( const std::vector<float> &vertices,
-                const VertexBufferLayout &layout,
-                const std::vector<unsigned int> &conn,
-                int bufferUsage )
+tgrMeshGL::tgrMeshGL( const std::vector<float>        &vertices,
+                      const tgrVertexBufferLayout     &layout,
+                      const std::vector<unsigned int> &conn,
+                      int                              bufferUsage )
 {
     PopulateBuffers( vertices, layout, conn, bufferUsage );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MeshGL::PopulateBuffers( const std::vector<float> &vertices,
-                              const VertexBufferLayout &layout,
-                              const std::vector<unsigned int> &conn,
-                              int bufferUsage )
+void tgrMeshGL::PopulateBuffers( const std::vector<float>        &vertices,
+                                 const tgrVertexBufferLayout     &layout,
+                                 const std::vector<unsigned int> &conn,
+                                 int                              bufferUsage )
 {
-    _vao = std::make_unique<VertexArray>();
-    _vbo = std::make_unique<VertexBuffer>( vertices.data(), static_cast<unsigned int>(vertices.size() * sizeof( float )), bufferUsage );
+    _vao = std::make_unique<tgrVertexArray>();
+    _vbo = std::make_unique<tgrVertexBuffer>(
+        vertices.data(),
+        static_cast<unsigned int>( vertices.size() * sizeof( float ) ),
+        bufferUsage );
 
     _vao->AddBuffer( *_vbo, layout );
 
-    _ibo = std::make_unique<IndexBuffer>( conn.data(), static_cast<unsigned int>(conn.size()) );
+    _ibo = std::make_unique<tgrIndexBuffer>(
+        conn.data(), static_cast<unsigned int>( conn.size() ) );
 }

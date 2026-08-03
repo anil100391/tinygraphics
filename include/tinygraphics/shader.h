@@ -10,7 +10,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Shader
+class tgrShader
 {
 public:
     // @params
@@ -36,21 +36,21 @@ public:
     //          {
     //              gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     //          }
-    Shader( const std::filesystem::path &filepath );
+    tgrShader( const std::filesystem::path &filepath );
 
     // @params
     // vertexShaderFilePath  : vertex shader source file
     // fragmentShaderFilePath: fragment shader source file
-    Shader( const std::filesystem::path &vertexShaderFilePath,
-            const std::filesystem::path &fragmentShaderFilePath );
+    tgrShader( const std::filesystem::path &vertexShaderFilePath,
+               const std::filesystem::path &fragmentShaderFilePath );
 
     // @params
     // vertexSource  : vertex shader source as a string
     // fragmentSource: fragment shader source as a string
-    Shader( const std::string &vertexSource,
-            const std::string &fragmentSource );
+    tgrShader( const std::string &vertexSource,
+               const std::string &fragmentSource );
 
-    ~Shader();
+    ~tgrShader();
 
     void Bind() const;
     void Unbind() const;

@@ -13,11 +13,11 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Mesh
+class tgrMesh
 {
 public:
-    Mesh() = default;
-    Mesh( const std::filesystem::path &meshFile );
+    tgrMesh() = default;
+    tgrMesh( const std::filesystem::path &meshFile );
 
     struct Tria
     {
@@ -40,14 +40,14 @@ public:
 
     bool InitializeFromFile( const std::filesystem::path &meshFile );
 
-    [[nodiscard]] const glm::vec3 &cog() noexcept
+    [[nodiscard]] const glm::vec3 &Cog() noexcept
     {
         if ( !_cog )
             ComputeCog();
         return *_cog;
     }
 
-    [[nodiscard]] const box3 &bbox() noexcept
+    [[nodiscard]] const tgrBox3 &BBox() noexcept
     {
         if ( !_bbox )
             ComputeBBox();
@@ -84,7 +84,7 @@ private:
     void ComputeCog();
 
     bool                       _smoothShaded = true;
-    std::unique_ptr<box3>      _bbox;
+    std::unique_ptr<tgrBox3>   _bbox;
     std::unique_ptr<glm::vec3> _cog;
 };
 

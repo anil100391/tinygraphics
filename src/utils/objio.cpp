@@ -7,14 +7,14 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-ObjIO::ObjIO( const std::filesystem::path &meshFile, Mesh &mesh )
+tgrObjIO::tgrObjIO( const std::filesystem::path &meshFile, tgrMesh &mesh )
     : _mesh( mesh ), _meshFile( meshFile )
 {
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool ObjIO::Populate()
+bool tgrObjIO::Populate()
 {
     if ( ".obj" != _meshFile.extension() )
     {
@@ -27,7 +27,7 @@ bool ObjIO::Populate()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool ObjIO::PopulateFromObj()
+bool tgrObjIO::PopulateFromObj()
 {
     assert( ".obj" == _meshFile.extension() );
 
@@ -56,7 +56,7 @@ bool ObjIO::PopulateFromObj()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool ObjIO::ParseLine( const std::string &line )
+bool tgrObjIO::ParseLine( const std::string &line )
 {
     if ( line.empty() )
     {
@@ -128,7 +128,7 @@ bool ObjIO::ParseLine( const std::string &line )
     }
     else if ( *c == 'f' )
     {
-        Mesh::Tria t0;
+        tgrMesh::Tria t0;
         // Faces e.g.
         // "f 1/1/1 5/2/1 7/3/1 3/4/1"
         c += 2;
@@ -148,7 +148,7 @@ bool ObjIO::ParseLine( const std::string &line )
         // quad face
         if ( *c != '\0' )
         {
-            Mesh::Tria t1;
+            tgrMesh::Tria t1;
 
             t1.vidx[0] = t0.vidx[0];
             t1.nidx[0] = t0.nidx[0];

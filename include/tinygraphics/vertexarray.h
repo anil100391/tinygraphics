@@ -3,27 +3,26 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class VertexBuffer;
-class VertexBufferLayout;
+class tgrVertexBuffer;
+class tgrVertexBufferLayout;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class VertexArray
+class tgrVertexArray
 {
 public:
+    tgrVertexArray();
+    ~tgrVertexArray();
 
-    VertexArray();
-    ~VertexArray();
-
-    void AddBuffer( const VertexBuffer &vb,
-                    const VertexBufferLayout &layout,
-                    bool instance = false );
+    void AddBuffer( const tgrVertexBuffer       &vb,
+                    const tgrVertexBufferLayout &layout,
+                    bool                         instance = false );
 
     void Bind() const;
     void Unbind() const;
-private:
 
-    unsigned int _rendererID = 0;
+private:
+    unsigned int _rendererID    = 0;
     unsigned int _numAttributes = 0;
 };
 

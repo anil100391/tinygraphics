@@ -1,46 +1,48 @@
 #ifndef _vertexbufferlayout_h_
 #define _vertexbufferlayout_h_
 
-#include "renderer.h"
+#include <renderer.h>
 #include <vector>
 #include <cassert>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct VertexBufferElement
+struct tgrVertexBufferElement
 {
-    unsigned int type = 0;
-    unsigned int count = 0;
+    unsigned int  type       = 0;
+    unsigned int  count      = 0;
     unsigned char normalized = 0;
 
-    static unsigned int GetSizeOfType(unsigned int type)
+    static unsigned int GetSizeOfType( unsigned int type )
     {
-        switch (type)
+        switch ( type )
         {
-            case GL_FLOAT: return 4;
-            case GL_UNSIGNED_INT: return 4;
-            case GL_UNSIGNED_BYTE: return 1;
+        case GL_FLOAT:
+            return 4;
+        case GL_UNSIGNED_INT:
+            return 4;
+        case GL_UNSIGNED_BYTE:
+            return 1;
         }
-        assert(false);
+        assert( false );
         return 0;
     }
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class VertexBufferLayout
+class tgrVertexBufferLayout
 {
 public:
-
-    VertexBufferLayout() = default;
+    tgrVertexBufferLayout() = default;
 
     template <typename T>
-    void Push(unsigned int count)
+    void Push( unsigned int count )
     {
         // static_assert(false);
     }
 
-    inline const std::vector<VertexBufferElement>& GetElements() const
+    inline const std::vector<tgrVertexBufferElement> &GetElements() const
     {
         return _elements;
     }
@@ -51,37 +53,36 @@ public:
     }
 
 private:
-
-    std::vector<VertexBufferElement>    _elements;
+    std::vector<tgrVertexBufferElement> _elements;
     unsigned int                        _stride = 0;
-
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-template<>
-inline void VertexBufferLayout::Push<float>(unsigned int count)
+template <>
+inline void tgrVertexBufferLayout::Push<float>( unsigned int count )
 {
-    _elements.push_back({ GL_FLOAT, count, GL_FALSE });
-    _stride += count * VertexBufferElement::GetSizeOfType(GL_FLOAT);
+    _elements.push_back( { GL_FLOAT, count, GL_FALSE } );
+    _stride += count * tgrVertexBufferElement::GetSizeOfType( GL_FLOAT );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-template<>
-inline void VertexBufferLayout::Push<unsigned int>(unsigned int count)
+template <>
+inline void tgrVertexBufferLayout::Push<unsigned int>( unsigned int count )
 {
-    _elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
-    _stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT);
+    _elements.push_back( { GL_UNSIGNED_INT, count, GL_FALSE } );
+    _stride += count * tgrVertexBufferElement::GetSizeOfType( GL_UNSIGNED_INT );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-template<>
-inline void VertexBufferLayout::Push<unsigned char>(unsigned int count)
+template <>
+inline void tgrVertexBufferLayout::Push<unsigned char>( unsigned int count )
 {
-    _elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE });
-    _stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+    _elements.push_back( { GL_UNSIGNED_BYTE, count, GL_TRUE } );
+    _stride +=
+        count * tgrVertexBufferElement::GetSizeOfType( GL_UNSIGNED_BYTE );
 }
 
 #endif // _vertexbufferlayout_h_

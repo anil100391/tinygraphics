@@ -5,19 +5,19 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Texture
+class tgrTexture
 {
 public:
     // Create Texture from image file
-    Texture( const std::filesystem::path &path );
+    tgrTexture( const std::filesystem::path &path );
 
     // Create texture from passed buffer
-    Texture( const unsigned char *pixels,
-             int                  width,
-             int                  height,
-             int                  channelsPerPixel );
+    tgrTexture( const unsigned char *pixels,
+                int                  width,
+                int                  height,
+                int                  channelsPerPixel );
 
-    ~Texture();
+    ~tgrTexture();
 
     void Bind( unsigned int slot ) const;
     void Unbind() const;

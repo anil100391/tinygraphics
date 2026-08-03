@@ -31,42 +31,42 @@ bool GLLogCall( const char *function, const char *file, int line )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Renderer::~Renderer()
+tgrRenderer::~tgrRenderer()
 {
     delete _textRenderer;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::Clear() const
+void tgrRenderer::Clear() const
 {
     glClear( GL_COLOR_BUFFER_BIT );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::Draw( const VertexArray &va,
-                     const IndexBuffer &ib,
-                     const Shader      &shader,
-                     DRAW_MODE          dm ) const
+void tgrRenderer::Draw( const tgrVertexArray &va,
+                        const tgrIndexBuffer &ib,
+                        const tgrShader      &shader,
+                        DRAW_MODE             dm ) const
 {
     Draw( va, ib, shader, 0, dm );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::DrawInstanced( const VertexArray &va,
-                              const IndexBuffer &ib,
-                              const Shader      &shader,
-                              unsigned int       count,
-                              DRAW_MODE          dm ) const
+void tgrRenderer::DrawInstanced( const tgrVertexArray &va,
+                                 const tgrIndexBuffer &ib,
+                                 const tgrShader      &shader,
+                                 unsigned int          count,
+                                 DRAW_MODE             dm ) const
 {
     Draw( va, ib, shader, count, dm );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-GLenum Renderer::GetGLDrawMode( DRAW_MODE dm ) const
+GLenum tgrRenderer::GetGLDrawMode( DRAW_MODE dm ) const
 {
     switch ( dm )
     {
@@ -81,11 +81,11 @@ GLenum Renderer::GetGLDrawMode( DRAW_MODE dm ) const
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::Draw( const VertexArray &va,
-                     const IndexBuffer &ib,
-                     const Shader      &shader,
-                     unsigned int       instanceCount,
-                     DRAW_MODE          dm ) const
+void tgrRenderer::Draw( const tgrVertexArray &va,
+                        const tgrIndexBuffer &ib,
+                        const tgrShader      &shader,
+                        unsigned int          instanceCount,
+                        DRAW_MODE             dm ) const
 {
     va.Bind();
     ib.Bind();
@@ -105,24 +105,24 @@ void Renderer::Draw( const VertexArray &va,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::SetFont( const std::filesystem::path &fontFile )
+void tgrRenderer::SetFont( const std::filesystem::path &fontFile )
 {
     GetOrCreateTextRenderer()->SetFont( fontFile );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::SetFontSize( float fontSize )
+void tgrRenderer::SetFontSize( float fontSize )
 {
     GetOrCreateTextRenderer()->SetFontSize( fontSize );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Renderer::DrawText( const std::string &text,
-                         unsigned int       px,
-                         unsigned int       py,
-                         const glm::vec3   &color )
+void tgrRenderer::DrawText( const std::string &text,
+                            unsigned int       px,
+                            unsigned int       py,
+                            const glm::vec3   &color )
 {
     if ( text.empty() )
     {
@@ -134,11 +134,11 @@ void Renderer::DrawText( const std::string &text,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-TextRenderer *Renderer::GetOrCreateTextRenderer()
+tgrTextRenderer *tgrRenderer::GetOrCreateTextRenderer()
 {
     if ( !_textRenderer )
     {
-        _textRenderer = new TextRenderer();
+        _textRenderer = new tgrTextRenderer();
     }
 
     return _textRenderer;

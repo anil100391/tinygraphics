@@ -8,12 +8,12 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Texture::Texture( const std::filesystem::path &filePath )
+tgrTexture::tgrTexture( const std::filesystem::path &filePath )
 {
     stbi_set_flip_vertically_on_load( 1 );
     auto channelsPerPixel = -1;
-    auto localBuffer =
-        stbi_load( filePath.string().c_str(), &_width, &_height, &channelsPerPixel, 4 );
+    auto localBuffer      = stbi_load(
+        filePath.string().c_str(), &_width, &_height, &channelsPerPixel, 4 );
 
     Create( localBuffer, _width, _height, 4 );
 
@@ -25,10 +25,10 @@ Texture::Texture( const std::filesystem::path &filePath )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Texture::Texture( const unsigned char *pixels,
-                  int                  width,
-                  int                  height,
-                  int                  channelsPerPixel )
+tgrTexture::tgrTexture( const unsigned char *pixels,
+                        int                  width,
+                        int                  height,
+                        int                  channelsPerPixel )
     : _width( width ), _height( height )
 {
     Create( pixels, _width, _height, channelsPerPixel );
@@ -36,10 +36,10 @@ Texture::Texture( const unsigned char *pixels,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Texture::Create( const unsigned char *pixels,
-                      int                  width,
-                      int                  height,
-                      int                  channelsPerPixel )
+void tgrTexture::Create( const unsigned char *pixels,
+                         int                  width,
+                         int                  height,
+                         int                  channelsPerPixel )
 {
     glGenTextures( 1, &_rendererID );
     glBindTexture( GL_TEXTURE_2D, _rendererID );
@@ -89,14 +89,14 @@ void Texture::Create( const unsigned char *pixels,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Texture::~Texture()
+tgrTexture::~tgrTexture()
 {
     glDeleteTextures( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Texture::Bind( unsigned int slot ) const
+void tgrTexture::Bind( unsigned int slot ) const
 {
     glActiveTexture( GL_TEXTURE0 + slot );
     glBindTexture( GL_TEXTURE_2D, _rendererID );
@@ -104,7 +104,7 @@ void Texture::Bind( unsigned int slot ) const
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Texture::Unbind() const
+void tgrTexture::Unbind() const
 {
     glBindTexture( GL_TEXTURE_2D, 0 );
 }

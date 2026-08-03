@@ -18,12 +18,12 @@ static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-PlanetExplorer::PlanetExplorer( const WindowProperties &wprops )
-    : Application( wprops, true )
+PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
+    : tgrApplication( wprops, true )
 {
     _camera.SetPosition( glm::vec3( 1.5f, 0.0f, 0.0f ) );
     _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
-    _camera.SetType( Camera::PROJECTION::ORTHOGRAPHIC );
+    _camera.SetType( tgrCamera::PROJECTION::ORTHOGRAPHIC );
 }
 
 // -----------------------------------------------------------------------------
@@ -56,20 +56,20 @@ void PlanetExplorer::Update()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
-    Application::Update();
+    tgrApplication::Update();
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool PlanetExplorer::OnEvent( Event &evt )
+bool PlanetExplorer::OnEvent( tgrEvent &evt )
 {
-    if ( evt.GetEventType() == EventType::KeyPressed &&
-         static_cast<KeyEvent &>( evt ).GetKeyCode() == 32 )
+    if ( evt.GetEventType() == tgrEventType::KeyPressed &&
+         static_cast<tgrKeyEvent &>( evt ).GetKeyCode() == 32 )
     {
         _running = !_running;
     }
 
-    return Application::OnEvent( evt );
+    return tgrApplication::OnEvent( evt );
 }
 
 // -----------------------------------------------------------------------------
@@ -92,9 +92,9 @@ void PlanetExplorer::Render()
     }
 
     // Draw planet
-    _glMesh->vbo()->Bind();
-    _glMesh->vao()->Bind();
-    _glMesh->ibo()->Bind();
+    _glMesh->Vbo()->Bind();
+    _glMesh->Vao()->Bind();
+    _glMesh->Ibo()->Bind();
 
     // uniforms
     if ( !_shader )
@@ -127,8 +127,8 @@ void PlanetExplorer::Render()
     _normalMap->Bind( 1 );
     _shader->SetUniform1i( "u_NormalMap", 1 );
 
-    static Renderer r;
-    r.Draw( *_glMesh->vao(), *_glMesh->ibo(), *_shader );
+    static tgrRenderer r;
+    r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *_shader );
 
     glm::vec3 titleColor = glm::vec3( 0.0f, 0.8f, 0.8f );
     glm::vec3 descColor  = glm::vec3( 0.8f, 0.8f, 0.0f );
@@ -215,7 +215,7 @@ void PlanetExplorer::CreatePlanet()
         }
     }
 
-    VertexBufferLayout layout;
+    tgrVertexBufferLayout layout;
     layout.Push<float>( 3 ); // position
     layout.Push<float>( 3 ); // normal
     layout.Push<float>( 2 ); // texture coordiante
@@ -238,7 +238,7 @@ void PlanetExplorer::CreatePlanet()
         }
     }
 
-    _glMesh = std::make_unique<MeshGL>( vertices, layout, conn );
+    _glMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
 }
 
 // -----------------------------------------------------------------------------
@@ -254,11 +254,11 @@ void PlanetExplorer::CreateShader()
                                         "/shaders/v3n3t2t3bt3_vert.glsl" );
     std::filesystem::path fragmentShader( exeDir.string() +
                                           "/shaders/v3n3t2t3bt3_frag.glsl" );
-    _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
+    _shader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
     _texture =
-        std::make_unique<Texture>( exeDir.string() + "/assets/mars.jpg" );
-    _normalMap = std::make_unique<Texture>( exeDir.string() +
-                                            "/assets/mars_normal.jpg" );
+        std::make_unique<tgrTexture>( exeDir.string() + "/assets/mars.jpg" );
+    _normalMap = std::make_unique<tgrTexture>( exeDir.string() +
+                                               "/assets/mars_normal.jpg" );
 }
 
 // -----------------------------------------------------------------------------
@@ -267,7 +267,7 @@ int main( int argc, const char *argv[] )
 {
     exeDir = std::filesystem::absolute( argv[0] ).parent_path();
 
-    WindowProperties wprops;
+    tgrWindowProperties wprops;
     wprops._maximized = true;
     wprops._notitle   = true;
 

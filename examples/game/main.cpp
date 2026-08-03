@@ -3,16 +3,16 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-int main(int argc, const char* argv[])
+int main( int argc, const char *argv[] )
 {
-    WindowProperties wprops;
-    wprops._width = 1920 / 2;
-    wprops._height = 1920 / 2;
+    tgrWindowProperties wprops;
+    wprops._width     = 1920 / 2;
+    wprops._height    = 1920 / 2;
     wprops._maximized = false;
-    wprops._notitle = false;
-    wprops._title = "tinygraphics game";
+    wprops._notitle   = false;
+    wprops._title     = "tinygraphics game";
 
-    Game game(wprops, std::filesystem::absolute(argv[0]).parent_path());
+    Game game( wprops, std::filesystem::absolute( argv[0] ).parent_path() );
     game.Run();
 
     return 0;

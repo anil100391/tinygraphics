@@ -6,7 +6,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class KeyEvent : public Event
+class tgrKeyEvent : public tgrEvent
 {
 public:
     inline int GetKeyCode() const
@@ -19,42 +19,42 @@ public:
         return EC_Keyboard | EC_Input;
     }
 
-    virtual EventType GetEventType() const = 0;
+    virtual tgrEventType GetEventType() const = 0;
 
 protected:
+    tgrKeyEvent( int keycode ) : _keyCode( keycode )
+    {
+    }
 
-    KeyEvent(int keycode)
-        : _keyCode(keycode)
-    {}
-
-    int    _keyCode;
+    int _keyCode;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class KeyPressedEvent : public KeyEvent
+class tgrKeyPressedEvent : public tgrKeyEvent
 {
 public:
-    KeyPressedEvent( int keycode, int repeatcount)
-        : KeyEvent(keycode), _repeatCount(repeatcount)
-    {}
+    tgrKeyPressedEvent( int keycode, int repeatcount )
+        : tgrKeyEvent( keycode ), _repeatCount( repeatcount )
+    {
+    }
 
     inline int GetRepeatCount() const
     {
         return _repeatCount;
     }
 
-    EventType GetEventType() const override
+    tgrEventType GetEventType() const override
     {
-        return EventType::KeyPressed;
+        return tgrEventType::KeyPressed;
     }
 
-    static EventType GetStaticEventType()
+    static tgrEventType GetStaticEventType()
     {
-        return EventType::KeyPressed;
+        return tgrEventType::KeyPressed;
     }
 
-    const char* GetName() const override
+    const char *GetName() const override
     {
         return "KeyPressedEvent";
     }
@@ -62,35 +62,35 @@ public:
     std::string ToString() const override
     {
         std::stringstream ss;
-        ss << "KeyPressedEvent: " << _keyCode << " (" << _repeatCount << " repeats)";
+        ss << "KeyPressedEvent: " << _keyCode << " (" << _repeatCount
+           << " repeats)";
         return ss.str();
     }
 
 private:
-
-    int     _repeatCount = 0;
+    int _repeatCount = 0;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class KeyReleasedEvent : public KeyEvent
+class tgrKeyReleasedEvent : public tgrKeyEvent
 {
 public:
-    KeyReleasedEvent( int keycode )
-        : KeyEvent(keycode)
-    {}
-
-    EventType GetEventType() const override
+    tgrKeyReleasedEvent( int keycode ) : tgrKeyEvent( keycode )
     {
-        return EventType::KeyReleased;
     }
 
-    static EventType GetStaticEventType()
+    tgrEventType GetEventType() const override
     {
-        return EventType::KeyReleased;
+        return tgrEventType::KeyReleased;
     }
 
-    const char* GetName() const override
+    static tgrEventType GetStaticEventType()
+    {
+        return tgrEventType::KeyReleased;
+    }
+
+    const char *GetName() const override
     {
         return "KeyReleasedEvent";
     }
@@ -102,6 +102,5 @@ public:
         return ss.str();
     }
 };
-
 
 #endif // _key_event_h_

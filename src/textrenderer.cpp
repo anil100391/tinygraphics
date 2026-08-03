@@ -27,25 +27,25 @@ extern unsigned int  JetBrainsMonoNLNerdFontMono_Thin_size;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void TextRenderer::SetFont( const std::filesystem::path &fontFile )
+void tgrTextRenderer::SetFont( const std::filesystem::path &fontFile )
 {
     _font.fontFile = fontFile;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void TextRenderer::SetFontSize( float size )
+void tgrTextRenderer::SetFontSize( float size )
 {
     _font.fontSize = size;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void TextRenderer::Draw( const Renderer    &renderer,
-                         const std::string &text,
-                         unsigned int       px,
-                         unsigned int       py,
-                         const glm::vec3   &color )
+void tgrTextRenderer::Draw( const tgrRenderer &renderer,
+                            const std::string &text,
+                            unsigned int       px,
+                            unsigned int       py,
+                            const glm::vec3   &color )
 {
     const auto &res = UpdateContext();
 
@@ -74,13 +74,13 @@ void TextRenderer::Draw( const Renderer    &renderer,
                                  xmax, ymax, 1.0f, 1.0f,
                                  xmin, ymax, 0.0f, 1.0f };
     // clang-format off
-    VertexBufferLayout layout;
+    tgrVertexBufferLayout layout;
     layout.Push<float>( 2u ); // pos
     layout.Push<float>( 2u ); // tex coord
 
     // choose winding such that we don't loose our triangles to back face culling
     const std::vector<unsigned int> conn{ 0, 2, 1, 0, 3, 2 };
-    static auto glMesh = std::make_unique<MeshGL>( vertices, layout, conn );
+    static auto glMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
 
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -119,11 +119,11 @@ void TextRenderer::Draw( const Renderer    &renderer,
                                      xmax, ymin, q.s1, q.t0,
                                      xmax, ymax, q.s1, q.t1,
                                      xmin, ymax, q.s0, q.t1 };
-        glMesh->vbo()->BufferData(vertices.data(), static_cast<unsigned int>(vertices.size() * sizeof( float )), GL_DYNAMIC_DRAW);
+        glMesh->Vbo()->BufferData(vertices.data(), static_cast<unsigned int>(vertices.size() * sizeof( float )), GL_DYNAMIC_DRAW);
         // clang-format on
         res.shader->SetUniformMat4f( "u_M", glm::mat4( 1.0f ) );
         res.shader->SetUniform3f( "u_Color", color );
-        renderer.Draw( *glMesh->vao(), *glMesh->ibo(), *res.shader );
+        renderer.Draw( *glMesh->Vao(), *glMesh->Ibo(), *res.shader );
     }
 
     glBindTexture( GL_TEXTURE_2D, 0 );
@@ -136,7 +136,7 @@ void TextRenderer::Draw( const Renderer    &renderer,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-const TextRenderer::FontResource &TextRenderer::UpdateContext()
+const tgrTextRenderer::FontResource &tgrTextRenderer::UpdateContext()
 {
     auto [it, inserted] = _fontCache.emplace( _font, FontResource{} );
     if ( !inserted )
@@ -201,16 +201,16 @@ const TextRenderer::FontResource &TextRenderer::UpdateContext()
     stbi_write_png( output.c_str(), 512, 512, 1, tempBitmap.data(), 512 );
 #endif // WRITE_FONT_ATLAS
 
-    fontResource.shader = GetOrCreateShader();
-    fontResource.texture =
-        std::make_unique<Texture>( tempBitmap.data(), texWidth, texHeight, 1 );
+    fontResource.shader  = GetOrCreateShader();
+    fontResource.texture = std::make_unique<tgrTexture>(
+        tempBitmap.data(), texWidth, texHeight, 1 );
 
     return fontResource;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-std::shared_ptr<Shader> TextRenderer::GetOrCreateShader()
+std::shared_ptr<tgrShader> tgrTextRenderer::GetOrCreateShader()
 {
     for ( const auto &i : _fontCache )
     {
@@ -241,5 +241,5 @@ std::shared_ptr<Shader> TextRenderer::GetOrCreateShader()
         "    gl_FragColor = vec4(u_Color, alpha);\n"
         "}\n";
 
-    return std::make_shared<Shader>( vshaderSource, fshaderSource );
+    return std::make_shared<tgrShader>( vshaderSource, fshaderSource );
 }

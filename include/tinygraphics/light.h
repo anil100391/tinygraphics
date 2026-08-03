@@ -1,51 +1,48 @@
 #ifndef _light_h_
 #define _light_h_
 
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-using vec3 = glm::vec3;
-using vec4 = glm::vec4;
+#include <glm/glm.hpp>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct lightbase
+struct LightBase
 {
-    vec4   _ambient    {0.2f, 0.2f, 0.2f, 1.0f};
-    vec4   _diffuse    {0.5f, 0.5f, 0.5f, 1.0f};
-    vec4   _specular   {1.0f, 1.0f, 1.0f, 1.0f};
+    glm::vec4 _ambient{ 0.2f, 0.2f, 0.2f, 1.0f };
+    glm::vec4 _diffuse{ 0.5f, 0.5f, 0.5f, 1.0f };
+    glm::vec4 _specular{ 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct pointlight : public lightbase
+struct PointLight : public LightBase
 {
-    vec3   _position   {0.0f, 0.0f, 0.0f};
+    glm::vec3 _position{ 0.0f, 0.0f, 0.0f };
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct directionallight : public lightbase
+struct DirectionalLight : public LightBase
 {
-    vec3   _direction   {1.0f, 0.0f, 0.0f};
+    glm::vec3 _direction{ 1.0f, 0.0f, 0.0f };
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct spotlight : public pointlight
+struct SpotLight : public PointLight
 {
-    vec3   _direction   {1.0f, 0.0f, 0.0f};
-    float  _cutoff      {0.866025f}; // cos(theta=30);
-    float  _falloff     {0.7071f};   // cos(theta=45);
+    glm::vec3 _direction{ 1.0f, 0.0f, 0.0f };
+    float     _cutoff{ 0.866025f }; // cos(theta=30);
+    float     _falloff{ 0.7071f };  // cos(theta=45);
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct material
+struct Material
 {
-    vec4    _ambient   {0.0f, 0.0f, 0.0f, 0.0f};
-    vec4    _diffuse   {1.0f, 1.0f, 1.0f, 1.0f};
-    vec4    _specular  {1.0f, 1.0f, 1.0f, 1.0f};
-    float   _shininess {32.0f};
+    glm::vec4 _ambient{ 0.0f, 0.0f, 0.0f, 0.0f };
+    glm::vec4 _diffuse{ 1.0f, 1.0f, 1.0f, 1.0f };
+    glm::vec4 _specular{ 1.0f, 1.0f, 1.0f, 1.0f };
+    float     _shininess{ 32.0f };
 };
 
 #endif // _light_h_

@@ -13,16 +13,16 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Renderer;
+class tgrRenderer;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class TextRenderer
+class tgrTextRenderer
 {
 public:
     void SetFont( const std::filesystem::path &fontFile );
     void SetFontSize( float fontSize );
-    void Draw( const Renderer    &renderer,
+    void Draw( const tgrRenderer &renderer,
                const std::string &text,
                unsigned int       px,
                unsigned int       py,
@@ -48,12 +48,12 @@ private:
     struct FontResource
     {
         std::vector<stbtt_bakedchar> fontMetrics; // ASCII 32..126 is 95 glyphs
-        std::unique_ptr<Texture>     texture;
-        std::shared_ptr<Shader>      shader;
+        std::unique_ptr<tgrTexture>  texture;
+        std::shared_ptr<tgrShader>   shader;
     };
 
-    const FontResource&     UpdateContext();
-    std::shared_ptr<Shader> GetOrCreateShader();
+    const FontResource        &UpdateContext();
+    std::shared_ptr<tgrShader> GetOrCreateShader();
 
     FontParams                         _font;
     std::map<FontParams, FontResource> _fontCache;

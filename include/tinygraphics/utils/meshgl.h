@@ -10,33 +10,44 @@
 #include <vector>
 #include <memory>
 
-class MeshGL
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+class tgrMeshGL
 {
 public:
+    tgrMeshGL() = default;
 
-    MeshGL() = default;
+    tgrMeshGL( const std::vector<float>        &vertices,
+               const tgrVertexBufferLayout     &layout,
+               const std::vector<unsigned int> &conn,
+               int                              bufferUsage = GL_STATIC_DRAW );
 
-    MeshGL( const std::vector<float> &vertices,
-            const VertexBufferLayout &layout,
-            const std::vector<unsigned int> &conn,
-            int bufferUsage=GL_STATIC_DRAW);
+    ~tgrMeshGL() = default;
 
-    ~MeshGL() = default;
+    tgrVertexArray *Vao() const
+    {
+        return _vao.get();
+    }
 
-    VertexArray*  vao() const { return _vao.get(); }
-    VertexBuffer* vbo() const { return _vbo.get(); }
-    IndexBuffer*  ibo() const { return _ibo.get(); }
+    tgrVertexBuffer *Vbo() const
+    {
+        return _vbo.get();
+    }
+
+    tgrIndexBuffer *Ibo() const
+    {
+        return _ibo.get();
+    }
 
 protected:
-
-    void PopulateBuffers( const std::vector<float> &vertices,
-                          const VertexBufferLayout &layout,
+    void PopulateBuffers( const std::vector<float>        &vertices,
+                          const tgrVertexBufferLayout     &layout,
                           const std::vector<unsigned int> &conn,
-                          int bufferUsage=GL_STATIC_DRAW);
+                          int bufferUsage = GL_STATIC_DRAW );
 
-    std::unique_ptr<VertexArray>    _vao;
-    std::unique_ptr<VertexBuffer>   _vbo;
-    std::unique_ptr<IndexBuffer>    _ibo;
+    std::unique_ptr<tgrVertexArray>  _vao;
+    std::unique_ptr<tgrVertexBuffer> _vbo;
+    std::unique_ptr<tgrIndexBuffer>  _ibo;
 };
 
 #endif //_mesh_gl_h_

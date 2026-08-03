@@ -3,39 +3,41 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-IndexBuffer::IndexBuffer( const unsigned int* data, unsigned int count )
-    : _count(count)
+tgrIndexBuffer::tgrIndexBuffer( const unsigned int *data, unsigned int count )
+    : _count( count )
 {
-    glGenBuffers(1, &_rendererID);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rendererID);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(unsigned int), data, GL_STATIC_DRAW);
+    glGenBuffers( 1, &_rendererID );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _rendererID );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER,
+                  count * sizeof( unsigned int ),
+                  data,
+                  GL_STATIC_DRAW );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-IndexBuffer::~IndexBuffer()
+tgrIndexBuffer::~tgrIndexBuffer()
 {
-    glDeleteBuffers(1, &_rendererID);
+    glDeleteBuffers( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void IndexBuffer::Bind() const
+void tgrIndexBuffer::Bind() const
 {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _rendererID);
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void IndexBuffer::Unbind() const
+void tgrIndexBuffer::Unbind() const
 {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-unsigned int IndexBuffer::GetCount() const
+unsigned int tgrIndexBuffer::GetCount() const
 {
     return _count;
 }
-

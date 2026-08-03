@@ -3,12 +3,11 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class IndexBuffer
+class tgrIndexBuffer
 {
 public:
-
-    IndexBuffer( const unsigned int* data, unsigned int count );
-    ~IndexBuffer();
+    tgrIndexBuffer( const unsigned int *data, unsigned int count );
+    ~tgrIndexBuffer();
 
     void Bind() const;
     void Unbind() const;
@@ -16,9 +15,8 @@ public:
     unsigned int GetCount() const;
 
 private:
-
-    unsigned int    _rendererID = 0;
-    unsigned int    _count      = 0;
+    unsigned int _rendererID = 0;
+    unsigned int _count      = 0;
 };
 
 #endif // _indexbuffer_h_

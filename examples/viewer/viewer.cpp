@@ -23,7 +23,8 @@ static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Viewer::Viewer( const WindowProperties &wprops ) : Application( wprops, true )
+Viewer::Viewer( const tgrWindowProperties &wprops )
+    : tgrApplication( wprops, true )
 {
 }
 
@@ -60,11 +61,11 @@ void Viewer::Update()
                                             "/assets/shaders/v3n3_vert.glsl" );
         std::filesystem::path fragmentShader(
             exeDir.string() + "/assets/shaders/v3n3_frag.glsl" );
-        _shader = std::make_unique<Shader>( vertexShader, fragmentShader );
+        _shader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
     }
 
-    _glSubject->vao()->Bind();
-    _glSubject->ibo()->Bind();
+    _glSubject->Vao()->Bind();
+    _glSubject->Ibo()->Bind();
     _shader->Bind();
 
     static float lastFrameTime = GetCurrentTime();
@@ -88,9 +89,9 @@ void Viewer::Update()
     _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
     _shader->SetUniform3f( "u_Color", glm::vec3( 0.32f, 0.31f, 0.26f ) );
 
-    static Renderer r;
+    static tgrRenderer r;
     // draw subject
-    r.Draw( *_glSubject->vao(), *_glSubject->ibo(), *_shader );
+    r.Draw( *_glSubject->Vao(), *_glSubject->Ibo(), *_shader );
 
     // draw ground
     auto groundMtx = glm::mat4( 1.0f );
@@ -101,7 +102,7 @@ void Viewer::Update()
 
     _shader->SetUniformMat4f( "u_M", groundMtx );
     _shader->SetUniform3f( "u_Color", glm::vec3( 0.412, 0.03f, 0.03f ) );
-    r.Draw( *_glGround->vao(), *_glGround->ibo(), *_shader );
+    r.Draw( *_glGround->Vao(), *_glGround->Ibo(), *_shader );
 
     r.DrawText( std::format( "FPS: {}", ImGui::GetIO().Framerate ), 32, 32 );
 
@@ -117,24 +118,24 @@ void Viewer::Update()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
-    Application::Update();
+    tgrApplication::Update();
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Viewer::OnEvent( Event &evt )
+bool Viewer::OnEvent( tgrEvent &evt )
 {
     _camera.OnEvent( evt );
-    return Application::OnEvent( evt );
+    return tgrApplication::OnEvent( evt );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Viewer::GetGLBuffers( const Mesh                  &mesh,
-                           MeshBufferObjects::IOParams &mbosIO,
-                           VertexBufferLayout          &layout )
+bool Viewer::GetGLBuffers( const tgrMesh                  &mesh,
+                           tgrMeshBufferObjects::IOParams &mbosIO,
+                           tgrVertexBufferLayout       &layout )
 {
-    if ( !MeshBufferObjects::Get( mesh, mbosIO ) )
+    if ( !tgrMeshBufferObjects::Get( mesh, mbosIO ) )
     {
         return false;
     }
@@ -155,16 +156,16 @@ bool Viewer::GetGLBuffers( const Mesh                  &mesh,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Viewer::CreateGLMesh( const Mesh &mesh, std::unique_ptr<MeshGL> &glMesh )
+bool Viewer::CreateGLMesh( const tgrMesh &mesh, std::unique_ptr<tgrMeshGL> &glMesh )
 {
-    MeshBufferObjects::IOParams mbosIO;
-    VertexBufferLayout          layout;
+    tgrMeshBufferObjects::IOParams mbosIO;
+    tgrVertexBufferLayout       layout;
     if ( !GetGLBuffers( mesh, mbosIO, layout ) )
     {
         return false;
     }
 
-    glMesh = std::make_unique<MeshGL>(
+    glMesh = std::make_unique<tgrMeshGL>(
         mbosIO.vertexAttribs, layout, mbosIO.connectivity );
     return true;
 }
@@ -176,17 +177,17 @@ bool Viewer::LoadSubject()
     auto asset =
         std::filesystem::path( exeDir.string() + "/assets/models/suzanne.obj" );
 
-    Mesh mesh( asset );
+    tgrMesh mesh( asset );
     if ( !CreateGLMesh( mesh, _glSubject ) )
     {
         return false;
     }
 
-    box3 box    = mesh.bbox();
-    auto center = box.center();
+    tgrBox3 box    = mesh.BBox();
+    auto center = box.Center();
     _camera.SetLookAt( glm::vec3( center[0], center[1], center[2] ) );
     _camera.SetPosition( _camera.GetLookAt() +
-                         glm::vec3( 0.0, 0.0, 1.0 ) * 1.25f * box.radius() );
+                         glm::vec3( 0.0, 0.0, 1.0 ) * 1.25f * box.Radius() );
     _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
     return true;
 }
@@ -198,7 +199,7 @@ bool Viewer::LoadGround()
     auto asset =
         std::filesystem::path( exeDir.string() + "/assets/models/ground.obj" );
 
-    Mesh mesh( asset );
+    tgrMesh mesh( asset );
     return CreateGLMesh( mesh, _glGround );
 }
 
@@ -208,7 +209,7 @@ int main( int argc, const char *argv[] )
 {
     exeDir = std::filesystem::path( argv[0] ).parent_path();
 
-    WindowProperties wprops;
+    tgrWindowProperties wprops;
     wprops._maximized = true;
     wprops._width     = 1920;
     wprops._height    = 1080;

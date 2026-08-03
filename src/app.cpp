@@ -20,7 +20,8 @@ void KeyCallback( GLFWwindow *window,
                   int         action,
                   int         mods )
 {
-    auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
+    auto app =
+        static_cast<tgrApplication *>( glfwGetWindowUserPointer( window ) );
     if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS )
     {
         glfwSetWindowShouldClose( window, GLFW_TRUE );
@@ -31,18 +32,18 @@ void KeyCallback( GLFWwindow *window,
     if ( action == GLFW_PRESS )
     {
         repeatcnt = 0;
-        KeyPressedEvent evt( key, 0 );
+        tgrKeyPressedEvent evt( key, 0 );
         app->OnEvent( evt );
     }
     else if ( action == GLFW_RELEASE )
     {
-        KeyReleasedEvent evt( key );
+        tgrKeyReleasedEvent evt( key );
         app->OnEvent( evt );
     }
     else if ( action == GLFW_REPEAT )
     {
         ++repeatcnt;
-        KeyPressedEvent evt( key, repeatcnt );
+        tgrKeyPressedEvent evt( key, repeatcnt );
         app->OnEvent( evt );
     }
 }
@@ -51,8 +52,9 @@ void KeyCallback( GLFWwindow *window,
 // -----------------------------------------------------------------------------
 void MouseMoveCallback( GLFWwindow *window, double xpos, double ypos )
 {
-    auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
-    MouseMoveEvent evt( (int)xpos, (int)ypos );
+    auto app =
+        static_cast<tgrApplication *>( glfwGetWindowUserPointer( window ) );
+    tgrMouseMoveEvent evt( (int)xpos, (int)ypos );
     app->OnEvent( evt );
 }
 
@@ -60,7 +62,8 @@ void MouseMoveCallback( GLFWwindow *window, double xpos, double ypos )
 // -----------------------------------------------------------------------------
 void MouseButtonCallback( GLFWwindow *window, int button, int action, int mods )
 {
-    auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
+    auto app =
+        static_cast<tgrApplication *>( glfwGetWindowUserPointer( window ) );
 
     double xpos = 0.0;
     double ypos = 0.0;
@@ -68,37 +71,38 @@ void MouseButtonCallback( GLFWwindow *window, int button, int action, int mods )
 
     if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS )
     {
-        MousePressedEvent evt(
-            (int)xpos, (int)ypos, MouseEvent::Button::RIGHT );
+        tgrMousePressedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::RIGHT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt(
-            (int)xpos, (int)ypos, MouseEvent::Button::RIGHT );
+        tgrMouseReleasedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::RIGHT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS )
     {
-        MousePressedEvent evt( (int)xpos, (int)ypos, MouseEvent::Button::LEFT );
+        tgrMousePressedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::LEFT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt(
-            (int)xpos, (int)ypos, MouseEvent::Button::LEFT );
+        tgrMouseReleasedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::LEFT );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS )
     {
-        MousePressedEvent evt(
-            (int)xpos, (int)ypos, MouseEvent::Button::MIDDLE );
+        tgrMousePressedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::MIDDLE );
         app->OnEvent( evt );
     }
     else if ( button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE )
     {
-        MouseReleasedEvent evt(
-            (int)xpos, (int)ypos, MouseEvent::Button::MIDDLE );
+        tgrMouseReleasedEvent evt(
+            (int)xpos, (int)ypos, tgrMouseEvent::Button::MIDDLE );
         app->OnEvent( evt );
     }
 }
@@ -107,12 +111,13 @@ void MouseButtonCallback( GLFWwindow *window, int button, int action, int mods )
 // -----------------------------------------------------------------------------
 void MouseScrollCallback( GLFWwindow *window, double xoffset, double yoffset )
 {
-    auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
+    auto app =
+        static_cast<tgrApplication *>( glfwGetWindowUserPointer( window ) );
 
     double xpos, ypos;
     glfwGetCursorPos( window, &xpos, &ypos );
 
-    MouseScrollEvent evt(
+    tgrMouseScrollEvent evt(
         static_cast<int>( xpos ), static_cast<int>( ypos ), xoffset, yoffset );
     app->OnEvent( evt );
 }
@@ -122,17 +127,18 @@ void MouseScrollCallback( GLFWwindow *window, double xoffset, double yoffset )
 void WindowResizeCallback( GLFWwindow *window, int width, int height )
 {
     glViewport( 0, 0, width, height );
-    WindowResizeEvent evt( width, height );
-    auto app = static_cast<Application *>( glfwGetWindowUserPointer( window ) );
+    tgrWindowResizeEvent evt( width, height );
+    auto                 app =
+        static_cast<tgrApplication *>( glfwGetWindowUserPointer( window ) );
     app->OnEvent( evt );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-WindowProperties::WindowProperties( unsigned int w,
-                                    unsigned int h,
-                                    const char  *title,
-                                    bool         maximized )
+tgrWindowProperties::tgrWindowProperties( unsigned int w,
+                                          unsigned int h,
+                                          const char  *title,
+                                          bool         maximized )
     : _width( w ), _height( h ), _title( title ), _maximized( maximized )
 {
 }
@@ -165,7 +171,8 @@ static void LogDeviceInfo()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Application::Application( const WindowProperties &wprops, bool initDearImGui )
+tgrApplication::tgrApplication( const tgrWindowProperties &wprops,
+                                bool                       initDearImGui )
 {
     if ( !glfwInit() )
         return;
@@ -257,7 +264,7 @@ Application::Application( const WindowProperties &wprops, bool initDearImGui )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Application::~Application()
+tgrApplication::~tgrApplication()
 {
     if ( _initDearImGui )
     {
@@ -272,7 +279,7 @@ Application::~Application()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Application::Update()
+void tgrApplication::Update()
 {
     glfwSwapBuffers( _window );
     glfwPollEvents();
@@ -280,35 +287,35 @@ void Application::Update()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Application::GetWindowSize( int &width, int &height ) const noexcept
+void tgrApplication::GetWindowSize( int &width, int &height ) const noexcept
 {
     glfwGetWindowSize( _window, &width, &height );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-float Application::GetCurrentTime() const noexcept
+float tgrApplication::GetCurrentTime() const noexcept
 {
     return static_cast<float>( glfwGetTime() );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Application::GetCursorPosition( double &x, double &y ) const noexcept
+void tgrApplication::GetCursorPosition( double &x, double &y ) const noexcept
 {
     glfwGetCursorPos( _window, &x, &y );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Application::OnEvent( Event &evt )
+bool tgrApplication::OnEvent( tgrEvent &evt )
 {
     return true;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Application::Run()
+void tgrApplication::Run()
 {
     while ( !glfwWindowShouldClose( _window ) )
     {

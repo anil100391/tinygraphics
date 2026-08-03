@@ -7,7 +7,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CubeMap::CubeMap( const std::vector<std::string> &textureFiles )
+tgrCubeMap::tgrCubeMap( const std::vector<std::string> &textureFiles )
 {
     stbi_set_flip_vertically_on_load( false );
     assert( textureFiles.size() == 6 );
@@ -55,14 +55,14 @@ CubeMap::CubeMap( const std::vector<std::string> &textureFiles )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CubeMap::~CubeMap()
+tgrCubeMap::~tgrCubeMap()
 {
     glDeleteTextures( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void CubeMap::Bind( unsigned int slot ) const
+void tgrCubeMap::Bind( unsigned int slot ) const
 {
     glActiveTexture( GL_TEXTURE0 + slot );
     glBindTexture( GL_TEXTURE_CUBE_MAP, _rendererID );
@@ -70,7 +70,7 @@ void CubeMap::Bind( unsigned int slot ) const
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void CubeMap::Unbind() const
+void tgrCubeMap::Unbind() const
 {
     glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
 }

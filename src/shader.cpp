@@ -7,7 +7,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Shader::Shader( const std::filesystem::path &filepath )
+tgrShader::tgrShader( const std::filesystem::path &filepath )
 {
     auto [vertexSource, fragmentSource] = ParseShader( filepath );
     _rendererID = CreateShader( vertexSource, fragmentSource );
@@ -15,8 +15,8 @@ Shader::Shader( const std::filesystem::path &filepath )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Shader::Shader( const std::filesystem::path &vertexShaderFilePath,
-                const std::filesystem::path &fragmentShaderFilePath )
+tgrShader::tgrShader( const std::filesystem::path &vertexShaderFilePath,
+                      const std::filesystem::path &fragmentShaderFilePath )
 {
     auto [vertexSource, fragmentSource] =
         ParseShader( vertexShaderFilePath, fragmentShaderFilePath );
@@ -25,15 +25,15 @@ Shader::Shader( const std::filesystem::path &vertexShaderFilePath,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Shader::Shader( const std::string &vertexSource,
-                const std::string &fragmentSource )
+tgrShader::tgrShader( const std::string &vertexSource,
+                      const std::string &fragmentSource )
 {
     _rendererID = CreateShader( vertexSource, fragmentSource );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Shader::~Shader()
+tgrShader::~tgrShader()
 {
     if ( _rendererID != 0 )
     {
@@ -43,84 +43,84 @@ Shader::~Shader()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::Bind() const
+void tgrShader::Bind() const
 {
     glUseProgram( _rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::Unbind() const
+void tgrShader::Unbind() const
 {
     glUseProgram( 0 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform1i( const std::string &name, int i0 )
+void tgrShader::SetUniform1i( const std::string &name, int i0 )
 {
     glUniform1i( GetUniformLocation( name ), i0 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform1f( const std::string &name, float f0 )
+void tgrShader::SetUniform1f( const std::string &name, float f0 )
 {
     glUniform1f( GetUniformLocation( name ), f0 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform2f( const std::string &name, float f0, float f1 )
+void tgrShader::SetUniform2f( const std::string &name, float f0, float f1 )
 {
     glUniform2f( GetUniformLocation( name ), f0, f1 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform3f( const std::string &name,
-                           float              f0,
-                           float              f1,
-                           float              f2 )
+void tgrShader::SetUniform3f( const std::string &name,
+                              float              f0,
+                              float              f1,
+                              float              f2 )
 {
     glUniform3f( GetUniformLocation( name ), f0, f1, f2 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform4f( const std::string &name,
-                           float              f0,
-                           float              f1,
-                           float              f2,
-                           float              f3 )
+void tgrShader::SetUniform4f( const std::string &name,
+                              float              f0,
+                              float              f1,
+                              float              f2,
+                              float              f3 )
 {
     glUniform4f( GetUniformLocation( name ), f0, f1, f2, f3 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform3f( const std::string &name, const glm::vec3 &v )
+void tgrShader::SetUniform3f( const std::string &name, const glm::vec3 &v )
 {
     glUniform3f( GetUniformLocation( name ), v[0], v[1], v[2] );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniform4f( const std::string &name, const glm::vec4 &v )
+void tgrShader::SetUniform4f( const std::string &name, const glm::vec4 &v )
 {
     glUniform4f( GetUniformLocation( name ), v[0], v[1], v[2], v[3] );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Shader::SetUniformMat4f( const std::string &name, const glm::mat4 &mat )
+void tgrShader::SetUniformMat4f( const std::string &name, const glm::mat4 &mat )
 {
     glUniformMatrix4fv( GetUniformLocation( name ), 1, GL_FALSE, &mat[0][0] );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-int Shader::GetUniformLocation( const std::string &name )
+int tgrShader::GetUniformLocation( const std::string &name )
 {
     int location = -1;
 
@@ -139,7 +139,7 @@ int Shader::GetUniformLocation( const std::string &name )
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 std::tuple<std::string, std::string>
-Shader::ParseShader( const std::filesystem::path &filepath )
+tgrShader::ParseShader( const std::filesystem::path &filepath )
 {
     std::ifstream stream( filepath );
     if ( !stream.is_open() )
@@ -180,8 +180,8 @@ Shader::ParseShader( const std::filesystem::path &filepath )
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 std::tuple<std::string, std::string>
-Shader::ParseShader( const std::filesystem::path &vertexShaderPath,
-                     const std::filesystem::path &fragmentShaderPath )
+tgrShader::ParseShader( const std::filesystem::path &vertexShaderPath,
+                        const std::filesystem::path &fragmentShaderPath )
 {
     std::ifstream vshader( vertexShaderPath );
     if ( !vshader.is_open() )
@@ -215,8 +215,8 @@ Shader::ParseShader( const std::filesystem::path &vertexShaderPath,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-unsigned int Shader::CompileShader( unsigned int       type,
-                                    const std::string &source )
+unsigned int tgrShader::CompileShader( unsigned int       type,
+                                       const std::string &source )
 {
     unsigned int id  = glCreateShader( type );
     const char  *src = source.c_str();
@@ -244,8 +244,8 @@ unsigned int Shader::CompileShader( unsigned int       type,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-unsigned int Shader::CreateShader( const std::string &vertexShader,
-                                   const std::string &fragmentShader )
+unsigned int tgrShader::CreateShader( const std::string &vertexShader,
+                                      const std::string &fragmentShader )
 {
     unsigned int program = glCreateProgram();
     unsigned int vs      = CompileShader( GL_VERTEX_SHADER, vertexShader );

@@ -13,11 +13,14 @@ struct GLFWwindow;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-struct WindowProperties
+struct tgrWindowProperties
 {
-    WindowProperties() = default;
-    WindowProperties(unsigned int w, unsigned int h, const char *title, bool maximized);
-    ~WindowProperties() = default;
+    tgrWindowProperties() = default;
+    tgrWindowProperties( unsigned int w,
+                         unsigned int h,
+                         const char  *title,
+                         bool         maximized );
+    ~tgrWindowProperties() = default;
 
     unsigned int _width     = 960u;
     unsigned int _height    = 540u;
@@ -28,32 +31,30 @@ struct WindowProperties
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Application
+class tgrApplication
 {
 public:
-    Application( const WindowProperties &wprops = WindowProperties(),
-                 bool initDearImGui = true );
+    tgrApplication( const tgrWindowProperties &wprops = tgrWindowProperties(),
+                    bool                       initDearImGui = true );
 
-    virtual ~Application();
+    virtual ~tgrApplication();
 
     void Run();
 
     virtual void Update();
 
-    void GetWindowSize(int &width, int &height) const noexcept;
+    void  GetWindowSize( int &width, int &height ) const noexcept;
     float GetCurrentTime() const noexcept;
-    void GetCursorPosition(double &x, double &y) const noexcept;
+    void  GetCursorPosition( double &x, double &y ) const noexcept;
 
-    virtual bool OnEvent( Event &evt );
+    virtual bool OnEvent( tgrEvent &evt );
 
 protected:
-
-    WindowProperties _windPros;
-    GLFWwindow *     _window = nullptr;
+    tgrWindowProperties _windPros;
+    GLFWwindow         *_window = nullptr;
 
 private:
-
-    bool             _initDearImGui = true;
+    bool _initDearImGui = true;
 };
 
 #endif // _app_h_

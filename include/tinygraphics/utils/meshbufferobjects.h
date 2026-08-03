@@ -5,11 +5,11 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Mesh;
+class tgrMesh;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MeshBufferObjects
+class tgrMeshBufferObjects
 {
 public:
     struct IOParams
@@ -28,7 +28,7 @@ public:
         std::vector<unsigned int> connectivity;  // tria definition
     };
 
-    static bool Get( const Mesh &m, IOParams &io );
+    static bool Get( const tgrMesh &m, IOParams &io );
 };
 
 #endif // _mesh_buffer_objects_h_

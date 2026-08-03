@@ -5,7 +5,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool MeshBufferObjects::Get( const Mesh &m, IOParams &io )
+bool tgrMeshBufferObjects::Get( const tgrMesh &m, IOParams &io )
 {
     if ( m.IsEmpty() )
     {

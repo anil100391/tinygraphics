@@ -21,15 +21,15 @@ bool GLLogCall( const char *function, const char *file, int line );
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class TextRenderer;
+class tgrTextRenderer;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Renderer
+class tgrRenderer
 {
 public:
-    Renderer() = default;
-    ~Renderer();
+    tgrRenderer() = default;
+    ~tgrRenderer();
 
     enum DRAW_MODE
     {
@@ -39,16 +39,16 @@ public:
 
     void Clear() const;
 
-    void Draw( const VertexArray &va,
-               const IndexBuffer &ib,
-               const Shader      &shader,
-               DRAW_MODE          dm = TRIANGLES ) const;
+    void Draw( const tgrVertexArray &va,
+               const tgrIndexBuffer &ib,
+               const tgrShader      &shader,
+               DRAW_MODE             dm = TRIANGLES ) const;
 
-    void DrawInstanced( const VertexArray &va,
-                        const IndexBuffer &ib,
-                        const Shader      &shader,
-                        unsigned int       count,
-                        DRAW_MODE          dm = TRIANGLES ) const;
+    void DrawInstanced( const tgrVertexArray &va,
+                        const tgrIndexBuffer &ib,
+                        const tgrShader      &shader,
+                        unsigned int          count,
+                        DRAW_MODE             dm = TRIANGLES ) const;
 
     // text rendering
     void SetFont( const std::filesystem::path &fontFile );
@@ -60,14 +60,14 @@ public:
 
 private:
     GLenum GetGLDrawMode( DRAW_MODE dm ) const;
-    void   Draw( const VertexArray &va,
-                 const IndexBuffer &ib,
-                 const Shader      &shader,
-                 unsigned int       instanceCount,
-                 DRAW_MODE          dm ) const;
+    void   Draw( const tgrVertexArray &va,
+                 const tgrIndexBuffer &ib,
+                 const tgrShader      &shader,
+                 unsigned int          instanceCount,
+                 DRAW_MODE             dm ) const;
 
-    TextRenderer *GetOrCreateTextRenderer();
-    TextRenderer *_textRenderer = nullptr;
+    tgrTextRenderer *GetOrCreateTextRenderer();
+    tgrTextRenderer *_textRenderer = nullptr;
 };
 
 #endif // _renderer_h_

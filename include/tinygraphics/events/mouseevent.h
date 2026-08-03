@@ -6,13 +6,14 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MouseEvent : public Event
+class tgrMouseEvent : public tgrEvent
 {
 public:
-
     enum class Button
     {
-        LEFT, RIGHT, MIDDLE
+        LEFT,
+        RIGHT,
+        MIDDLE
     };
 
     inline int X() const
@@ -38,35 +39,34 @@ public:
     }
 
 protected:
+    tgrMouseEvent( int x, int y ) : _x( x ), _y( y )
+    {
+    }
 
-    MouseEvent(int x, int y)
-        : _x(x), _y(y)
-    {}
-
-    int    _x;
-    int    _y;
+    int _x;
+    int _y;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MouseMoveEvent : public MouseEvent
+class tgrMouseMoveEvent : public tgrMouseEvent
 {
 public:
-    MouseMoveEvent( int x, int y )
-        : MouseEvent( x, y )
-    {}
-
-    EventType GetEventType() const override
+    tgrMouseMoveEvent( int x, int y ) : tgrMouseEvent( x, y )
     {
-        return EventType::MouseMoved;
     }
 
-    static EventType GetStaticEventType()
+    tgrEventType GetEventType() const override
     {
-        return EventType::MouseMoved;
+        return tgrEventType::MouseMoved;
     }
 
-    const char* GetName() const override
+    static tgrEventType GetStaticEventType()
+    {
+        return tgrEventType::MouseMoved;
+    }
+
+    const char *GetName() const override
     {
         return "MouseMovedEvent";
     }
@@ -74,24 +74,25 @@ public:
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MousePressedEvent : public MouseEvent
+class tgrMousePressedEvent : public tgrMouseEvent
 {
 public:
-    MousePressedEvent( int x, int y, MouseEvent::Button button )
-        : MouseEvent( x, y ), _button( button )
-    {}
-
-    EventType GetEventType() const override
+    tgrMousePressedEvent( int x, int y, tgrMouseEvent::Button button )
+        : tgrMouseEvent( x, y ), _button( button )
     {
-        return EventType::MouseButtonPressed;
     }
 
-    static EventType GetStaticEventType()
+    tgrEventType GetEventType() const override
     {
-        return EventType::MouseButtonPressed;
+        return tgrEventType::MouseButtonPressed;
     }
 
-    const char* GetName() const override
+    static tgrEventType GetStaticEventType()
+    {
+        return tgrEventType::MouseButtonPressed;
+    }
+
+    const char *GetName() const override
     {
         return "MousePressedEvent";
     }
@@ -101,36 +102,36 @@ public:
         return EC_Mouse | EC_MouseButton | EC_Input;
     }
 
-    [[nodiscard]] MouseEvent::Button GetButton() const noexcept
+    [[nodiscard]] tgrMouseEvent::Button GetButton() const noexcept
     {
         return _button;
     }
 
 private:
-
-    MouseEvent::Button  _button;
+    tgrMouseEvent::Button _button;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MouseReleasedEvent : public MouseEvent
+class tgrMouseReleasedEvent : public tgrMouseEvent
 {
 public:
-    MouseReleasedEvent( int x, int y, MouseEvent::Button button )
-        : MouseEvent( x, y ), _button( button )
-    {}
-
-    EventType GetEventType() const override
+    tgrMouseReleasedEvent( int x, int y, tgrMouseEvent::Button button )
+        : tgrMouseEvent( x, y ), _button( button )
     {
-        return EventType::MouseButtonReleased;
     }
 
-    static EventType GetStaticEventType()
+    tgrEventType GetEventType() const override
     {
-        return EventType::MouseButtonReleased;
+        return tgrEventType::MouseButtonReleased;
     }
 
-    const char* GetName() const override
+    static tgrEventType GetStaticEventType()
+    {
+        return tgrEventType::MouseButtonReleased;
+    }
+
+    const char *GetName() const override
     {
         return "MouseReleasedEvent";
     }
@@ -140,38 +141,36 @@ public:
         return EC_Mouse | EC_MouseButton | EC_Input;
     }
 
-    [[nodiscard]] MouseEvent::Button GetButton() const noexcept
+    [[nodiscard]] tgrMouseEvent::Button GetButton() const noexcept
     {
         return _button;
     }
 
 private:
-
-    MouseEvent::Button  _button;
+    tgrMouseEvent::Button _button;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class MouseScrollEvent : public MouseEvent
+class tgrMouseScrollEvent : public tgrMouseEvent
 {
 public:
-    MouseScrollEvent( int x, int y, double xoffset, double yoffset )
-        : MouseEvent( x, y ),
-          _xoffset(xoffset),
-          _yoffset(yoffset)
-    {}
-
-    EventType GetEventType() const override
+    tgrMouseScrollEvent( int x, int y, double xoffset, double yoffset )
+        : tgrMouseEvent( x, y ), _xoffset( xoffset ), _yoffset( yoffset )
     {
-        return EventType::MouseScrolled;
     }
 
-    static EventType GetStaticEventType()
+    tgrEventType GetEventType() const override
     {
-        return EventType::MouseScrolled;
+        return tgrEventType::MouseScrolled;
     }
 
-    const char* GetName() const override
+    static tgrEventType GetStaticEventType()
+    {
+        return tgrEventType::MouseScrolled;
+    }
+
+    const char *GetName() const override
     {
         return "MouseScrolledEvent";
     }
@@ -192,7 +191,6 @@ public:
     }
 
 private:
-
     double _xoffset;
     double _yoffset;
 };

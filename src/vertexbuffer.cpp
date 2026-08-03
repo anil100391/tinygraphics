@@ -3,38 +3,42 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-VertexBuffer::VertexBuffer( const void* data, unsigned int size, int usage )
+tgrVertexBuffer::tgrVertexBuffer( const void  *data,
+                                  unsigned int size,
+                                  int          usage )
 {
-    glGenBuffers(1, &_rendererID);
+    glGenBuffers( 1, &_rendererID );
     Bind();
-    BufferData(data, size, usage);
+    BufferData( data, size, usage );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexBuffer::BufferData(const void* data, unsigned int size, int usage) const
+void tgrVertexBuffer::BufferData( const void  *data,
+                                  unsigned int size,
+                                  int          usage ) const
 {
     Bind();
-    glBufferData(GL_ARRAY_BUFFER, size, data, usage);
+    glBufferData( GL_ARRAY_BUFFER, size, data, usage );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-VertexBuffer::~VertexBuffer()
+tgrVertexBuffer::~tgrVertexBuffer()
 {
-    glDeleteBuffers(1, &_rendererID);
+    glDeleteBuffers( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexBuffer::Bind() const
+void tgrVertexBuffer::Bind() const
 {
-    glBindBuffer(GL_ARRAY_BUFFER, _rendererID);
+    glBindBuffer( GL_ARRAY_BUFFER, _rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexBuffer::Unbind() const
+void tgrVertexBuffer::Unbind() const
 {
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }

@@ -4,49 +4,54 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-VertexArray::VertexArray()
+tgrVertexArray::tgrVertexArray()
 {
-    glGenVertexArrays(1, &_rendererID);
+    glGenVertexArrays( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-VertexArray::~VertexArray()
+tgrVertexArray::~tgrVertexArray()
 {
-    glDeleteVertexArrays(1, &_rendererID);
+    glDeleteVertexArrays( 1, &_rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexArray::Bind() const
+void tgrVertexArray::Bind() const
 {
-    glBindVertexArray(_rendererID);
+    glBindVertexArray( _rendererID );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexArray::Unbind() const
+void tgrVertexArray::Unbind() const
 {
-    glBindVertexArray(0);
+    glBindVertexArray( 0 );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VertexArray::AddBuffer( const VertexBuffer &vb,
-                             const VertexBufferLayout &layout,
-                             bool instance )
+void tgrVertexArray::AddBuffer( const tgrVertexBuffer       &vb,
+                                const tgrVertexBufferLayout &layout,
+                                bool                         instance )
 {
     Bind();
     vb.Bind();
-    const auto& elements = layout.GetElements();
-    unsigned int offset = 0;
+    const auto  &elements = layout.GetElements();
+    unsigned int offset   = 0;
     for ( unsigned int ii = 0; ii < elements.size(); ++ii )
     {
-        const auto& element = elements[ii];
-        glEnableVertexAttribArray(_numAttributes);
-        glVertexAttribPointer(_numAttributes, element.count, element.type, element.normalized,
-                layout.GetStride(), (const void*)(uint64_t)offset);
-        offset += element.count * VertexBufferElement::GetSizeOfType(element.type);
+        const auto &element = elements[ii];
+        glEnableVertexAttribArray( _numAttributes );
+        glVertexAttribPointer( _numAttributes,
+                               element.count,
+                               element.type,
+                               element.normalized,
+                               layout.GetStride(),
+                               (const void *)(uint64_t)offset );
+        offset += element.count *
+                  tgrVertexBufferElement::GetSizeOfType( element.type );
 
         if ( instance )
         {

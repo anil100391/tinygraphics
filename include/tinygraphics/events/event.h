@@ -6,7 +6,7 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-enum class EventType
+enum class tgrEventType
 {
     None                = 0,
     WindowClose         = 1,
@@ -24,52 +24,51 @@ enum class EventType
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-enum EventCategory
+enum tgrEventCategory
 {
-    None                = 0,
-    EC_Application      = 1 << 0,
-    EC_Input            = 1 << 1,
-    EC_Keyboard         = 1 << 2,
-    EC_Mouse            = 1 << 3,
-    EC_MouseButton      = 1 << 4
+    None           = 0,
+    EC_Application = 1 << 0,
+    EC_Input       = 1 << 1,
+    EC_Keyboard    = 1 << 2,
+    EC_Mouse       = 1 << 3,
+    EC_MouseButton = 1 << 4
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class Event
+class tgrEvent
 {
-    friend class EventDispatcher;
-public:
+    friend class tgrEventDispatcher;
 
-    virtual EventType GetEventType() const = 0;
-    virtual const char* GetName() const = 0;
-    virtual int GetCategoryFlags() const = 0;
-    virtual std::string ToString() const
+public:
+    virtual tgrEventType GetEventType() const     = 0;
+    virtual const char  *GetName() const          = 0;
+    virtual int          GetCategoryFlags() const = 0;
+    virtual std::string  ToString() const
     {
         return GetName();
     }
 
-    inline bool IsInCategory(EventCategory category)
+    inline bool IsInCategory( tgrEventCategory category )
     {
         return GetCategoryFlags() & category;
     }
 
 protected:
-
-    bool    _handled = false;
+    bool _handled = false;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class EventDispatcher
+class tgrEventDispatcher
 {
     template <class evt>
     using EventFn = std::function<bool( evt & )>;
-public:
 
-    EventDispatcher( Event& event )
-        : _event(event)
-    {}
+public:
+    tgrEventDispatcher( tgrEvent &event ) : _event( event )
+    {
+    }
 
     template <class evt>
     bool Dispatch( EventFn<evt> func )
@@ -83,13 +82,12 @@ public:
     }
 
 private:
-
-    Event   &_event;
+    tgrEvent &_event;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-inline std::ostream &operator<<( std::ostream &os, const Event &evt )
+inline std::ostream &operator<<( std::ostream &os, const tgrEvent &evt )
 {
     return os << evt.ToString();
 }

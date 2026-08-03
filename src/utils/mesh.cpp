@@ -7,24 +7,24 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-Mesh::Mesh( const std::filesystem::path &meshFile )
+tgrMesh::tgrMesh( const std::filesystem::path &meshFile )
 {
     InitializeFromFile( meshFile );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Mesh::InitializeFromFile( const std::filesystem::path &meshFile )
+bool tgrMesh::InitializeFromFile( const std::filesystem::path &meshFile )
 {
     _name = meshFile.filename().string();
 
-    ObjIO io( meshFile, *this );
+    tgrObjIO io( meshFile, *this );
     return io.Populate();
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Mesh::ComputeCog()
+void tgrMesh::ComputeCog()
 {
     _cog               = std::make_unique<glm::vec3>( 0.0f, 0.0f, 0.0f );
     float  sum[3]      = { 0.0f, 0.0f, 0.0f };
@@ -43,13 +43,13 @@ void Mesh::ComputeCog()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Mesh::ComputeBBox()
+void tgrMesh::ComputeBBox()
 {
-    _bbox              = std::make_unique<box3>();
+    _bbox              = std::make_unique<tgrBox3>();
     size_t numVertices = _vertices.size() / 3;
     for ( size_t ii = 0; ii < numVertices; ++ii )
     {
         const float *v = &_vertices[3 * ii];
-        _bbox->expand( v );
+        _bbox->Expand( v );
     }
 }

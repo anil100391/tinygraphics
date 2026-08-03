@@ -7,11 +7,11 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-class ObjIO
+class tgrObjIO
 {
 public:
-    ObjIO( const std::filesystem::path &meshFile, Mesh &mesh );
-    ~ObjIO() = default;
+    tgrObjIO( const std::filesystem::path &meshFile, tgrMesh &mesh );
+    ~tgrObjIO() = default;
 
     bool Populate();
 
@@ -28,13 +28,13 @@ private:
     ParseIndex( const char *begin, const char *end, unsigned int &value );
 
     const std::filesystem::path _meshFile;
-    Mesh                       &_mesh;
+    tgrMesh                    &_mesh;
 };
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-inline const char *ObjIO::FindNonWhiteSpaceChar( const char *begin,
-                                                 const char *end )
+inline const char *tgrObjIO::FindNonWhiteSpaceChar( const char *begin,
+                                                    const char *end )
 {
     auto p = begin;
     while ( p <= end && std::isspace( *p ) )
@@ -48,7 +48,7 @@ inline const char *ObjIO::FindNonWhiteSpaceChar( const char *begin,
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 inline const char *
-ObjIO::ParseFloat( const char *begin, const char *end, float &value )
+tgrObjIO::ParseFloat( const char *begin, const char *end, float &value )
 {
     auto floatBegin = FindNonWhiteSpaceChar( begin, end );
 
@@ -64,7 +64,7 @@ ObjIO::ParseFloat( const char *begin, const char *end, float &value )
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 inline const char *
-ObjIO::ParseIndex( const char *begin, const char *end, unsigned int &value )
+tgrObjIO::ParseIndex( const char *begin, const char *end, unsigned int &value )
 {
     auto floatBegin = FindNonWhiteSpaceChar( begin, end );
 
