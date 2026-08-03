@@ -21,6 +21,10 @@ public:
 
     void Bind( unsigned int slot ) const;
     void Unbind() const;
+    void Update( const unsigned char *pixels,
+                 int                  width,
+                 int                  height,
+                 int                  channelsPerPixel );
 
     inline int GetWidth() const
     {

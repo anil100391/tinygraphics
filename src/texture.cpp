@@ -12,10 +12,12 @@ tgrTexture::tgrTexture( const std::filesystem::path &filePath )
 {
     stbi_set_flip_vertically_on_load( 1 );
     auto channelsPerPixel = -1;
+    auto width            = -1;
+    auto height           = -1;
     auto localBuffer      = stbi_load(
-        filePath.string().c_str(), &_width, &_height, &channelsPerPixel, 4 );
+        filePath.string().c_str(), &width, &height, &channelsPerPixel, 4 );
 
-    Create( localBuffer, _width, _height, 4 );
+    Create( localBuffer, width, height, 4 );
 
     if ( localBuffer )
     {
@@ -29,7 +31,6 @@ tgrTexture::tgrTexture( const unsigned char *pixels,
                         int                  width,
                         int                  height,
                         int                  channelsPerPixel )
-    : _width( width ), _height( height )
 {
     Create( pixels, _width, _height, channelsPerPixel );
 }
@@ -48,6 +49,40 @@ void tgrTexture::Create( const unsigned char *pixels,
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+    Update( pixels, width, height, channelsPerPixel );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+tgrTexture::~tgrTexture()
+{
+    glDeleteTextures( 1, &_rendererID );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void tgrTexture::Bind( unsigned int slot ) const
+{
+    glActiveTexture( GL_TEXTURE0 + slot );
+    glBindTexture( GL_TEXTURE_2D, _rendererID );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void tgrTexture::Unbind() const
+{
+    glBindTexture( GL_TEXTURE_2D, 0 );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void tgrTexture::Update( const unsigned char *pixels,
+                         int                  width,
+                         int                  height,
+                         int                  channelsPerPixel )
+{
+    glBindTexture( GL_TEXTURE_2D, _rendererID );
 
     GLint  internalFormat = GL_RGBA;
     GLenum format         = GL_RGBA;
@@ -84,27 +119,5 @@ void tgrTexture::Create( const unsigned char *pixels,
                   GL_UNSIGNED_BYTE,
                   pixels );
 
-    glBindTexture( GL_TEXTURE_2D, 0 );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-tgrTexture::~tgrTexture()
-{
-    glDeleteTextures( 1, &_rendererID );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void tgrTexture::Bind( unsigned int slot ) const
-{
-    glActiveTexture( GL_TEXTURE0 + slot );
-    glBindTexture( GL_TEXTURE_2D, _rendererID );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void tgrTexture::Unbind() const
-{
     glBindTexture( GL_TEXTURE_2D, 0 );
 }
