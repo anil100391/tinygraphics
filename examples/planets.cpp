@@ -28,6 +28,8 @@ std::vector<PlanetsDB::Info> PlanetsDB::s_database;
 // -----------------------------------------------------------------------------
 constexpr float largestSolarDistance = 5.9064e12f; // Pluto
 constexpr float largestRadius        = 6.9634e8f;  // Sun
+constexpr float near_plane           = 0.005f;     // near clipping plane
+constexpr float far_plane            = 100.0f;     // far clipping plane
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -42,8 +44,8 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
 
     if ( normalized )
     {
-        float rfac = body == CelestialBody::Sun ? 0.01f : 0.001f;
-        info.radius /= (rfac * largestSolarDistance);
+        float rfac = body == CelestialBody::Sun ? 0.01f : 0.002f;
+        info.radius /= ( rfac * largestSolarDistance );
         info.solarDistance /= largestSolarDistance;
     }
 
@@ -251,7 +253,7 @@ PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
 
     const auto &info = PlanetsDB::GetInfo( CelestialBody::Mars, true );
     _camera.SetLookAt( glm::vec3( info.solarDistance, 0.0f, 0.0f ) );
-    _camera.SetType( tgrCamera::PROJECTION::ORTHOGRAPHIC );
+    _camera.SetType( tgrCamera::PROJECTION::PERSPECTIVE );
 }
 
 // -----------------------------------------------------------------------------
@@ -552,7 +554,7 @@ std::unique_ptr<tgrShader>& PlanetExplorer::UpdateShader( CelestialBody body )
     GetWindowSize( width, height );
     float     aspectRatio = ( 1.0f * width ) / height;
     glm::mat4 projection =
-        _camera.GetProjectionMatrix( aspectRatio, 0.005f, 100.0f );
+        _camera.GetProjectionMatrix( aspectRatio, near_plane, far_plane );
     shaderToUse->SetUniformMat4f( "u_P", projection );
 
     // ------------------------------------------------------------------------
@@ -596,7 +598,7 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
     GetWindowSize( width, height );
     float     aspectRatio = ( 1.0f * width ) / height;
     glm::mat4 projection =
-        _camera.GetProjectionMatrix( aspectRatio, 0.005f, 100.0f );
+        _camera.GetProjectionMatrix( aspectRatio, near_plane, far_plane );
     shaderToUse->SetUniformMat4f( "u_P", projection );
     return shaderToUse;
 }
