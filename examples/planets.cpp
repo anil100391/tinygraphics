@@ -18,11 +18,238 @@ static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+static tgrRenderer r;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+std::vector<PlanetsDB::Info> PlanetsDB::s_database;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+constexpr float largestSolarDistance = 5.9064e12f; // Pluto
+constexpr float largestRadius        = 6.9634e8f;  // Sun
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
+{
+    if ( s_database.empty() )
+    {
+        PopulateDB();
+    }
+
+    auto info = s_database[static_cast<size_t>( body )];
+
+    if ( normalized )
+    {
+        info.radius /= (0.01f * largestSolarDistance);
+        info.solarDistance /= largestSolarDistance;
+    }
+
+    return info;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetsDB::PopulateDB()
+{
+    s_database = { { "Sun",
+                     "Star",
+                     6.9634e8f,
+                     1.9891e30f,
+                     0.0f,
+                     0.0f,
+                     25.0f,
+                     0.0f,
+                     274.0f },
+                   { "Mercury",
+                     "Planet",
+                     2.4394e6f,
+                     3.30103e23f,
+                     5.7909e10f,
+                     87.969f,
+                     1407.6f,
+                     0.034f,
+                     3.70f },
+                   { "Venus",
+                     "Planet",
+                     6.0518e6f,
+                     4.86731e24f,
+                     1.0821e11f,
+                     224.701f,
+                     5832.5f,
+                     177.4f,
+                     8.87f },
+                   { "Earth",
+                     "Planet",
+                     6.3710e6f,
+                     5.9722e24f,
+                     1.4960e11f,
+                     365.256f,
+                     23.934f,
+                     23.44f,
+                     9.81f },
+                   { "Mars",
+                     "Planet",
+                     3.3895e6f,
+                     6.4171e23f,
+                     2.2794e11f,
+                     686.980f,
+                     24.623f,
+                     25.19f,
+                     3.71f },
+                   { "Jupiter",
+                     "Planet",
+                     6.9911e7f,
+                     1.89813e27f,
+                     7.7857e11f,
+                     4332.59f,
+                     9.925f,
+                     3.13f,
+                     23.12f },
+                   { "Saturn",
+                     "Planet",
+                     5.8232e7f,
+                     5.6834e26f,
+                     1.4335e12f,
+                     10759.2f,
+                     10.656f,
+                     26.73f,
+                     8.96f },
+                   { "Uranus",
+                     "Planet",
+                     2.5362e7f,
+                     8.6810e25f,
+                     2.8725e12f,
+                     30688.5f,
+                     17.24f,
+                     97.77f,
+                     8.69f },
+                   { "Neptune",
+                     "Planet",
+                     2.4622e7f,
+                     1.02409e26f,
+                     4.4951e12f,
+                     60182.0f,
+                     16.11f,
+                     28.32f,
+                     11.15f },
+                   { "Pluto",
+                     "Dwarf Planet",
+                     1.1883e6f,
+                     1.303e22f,
+                     5.9064e12f,
+                     90530.0f,
+                     15.15f,
+                     122.54f,
+                     0.66f } };
+
+    s_database.resize( static_cast<size_t>( CelestialBody::Count ) );
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Sun )];
+    //    info.name   = "Sun";
+    //    info.type   = "Star";
+    //    info.radius = 0.0f;
+    //    info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Mercury
+    //    )]; info.name   = "Mercury"; info.radius = 0.0f; info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Venus )];
+    //    info.name   = "Venus";
+    //    info.radius = 0.0f;
+    //    info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Earth )];
+    //    info.name   = "Earth";
+    //    info.radius = 0.0f;
+    //    info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Mars )];
+    //    info.name   = "Mars";
+    //    info.radius = 6'794'000 / 2;
+    //    info.mass   = 0.0f;
+    //    info.solarDistance = 228'000'000'000;
+    //    info.solarDistance /= 4'000'000'000;
+    //    info.daysInAYear    = 687;
+    //    info.hoursInADay    = 24.6f;
+    //    info.axialTilt      = 25.19f;
+    //    info.surfaceGravity = 3.71f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Jupiter
+    //    )]; info.name   = "Jupiter"; info.radius = 0.0f; info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Saturn
+    //    )]; info.name   = "Saturn"; info.radius = 0.0f; info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Uranus
+    //    )]; info.name   = "Uranus"; info.radius = 0.0f; info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Neptune
+    //    )]; info.name   = "Neptue"; info.radius = 0.0f; info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+
+    //{
+    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Pluto )];
+    //    info.name   = "Pluto";
+    //    info.radius = 0.0f;
+    //    info.mass   = 0.0f;
+    //    info.solarDistance = 0.0f;
+    //    info.daysInAYear   = 0.0f;
+    //    info.hoursInADay   = 0.0f;
+    //}
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     : tgrApplication( wprops, true )
 {
-    _camera.SetPosition( glm::vec3( 1.5f, 0.0f, 0.0f ) );
-    _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
+    _camera.SetPosition( glm::vec3( -0.0f, 0.0f, 0.0f ) );
+
+    const auto &info = PlanetsDB::GetInfo( CelestialBody::Mars, true );
+    _camera.SetLookAt( glm::vec3( info.solarDistance, 0.0f, 0.0f ) );
     _camera.SetType( tgrCamera::PROJECTION::ORTHOGRAPHIC );
 }
 
@@ -69,6 +296,7 @@ bool PlanetExplorer::OnEvent( tgrEvent &evt )
         _running = !_running;
     }
 
+    _camera.OnEvent( evt );
     return tgrApplication::OnEvent( evt );
 }
 
@@ -85,70 +313,14 @@ void PlanetExplorer::Render()
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    // Create planet if need be
-    if ( !_glMesh )
-    {
-        CreatePlanet();
-    }
+    UpdateShaderCommon();
 
-    // Draw planet
-    _glMesh->Vbo()->Bind();
-    _glMesh->Vao()->Bind();
-    _glMesh->Ibo()->Bind();
+    DrawPlanet();
 
-    // uniforms
-    if ( !_shader )
-    {
-        CreateShader();
-    }
+    ShowPlanetInfo();
 
-    _shader->Bind();
     int width, height;
     GetWindowSize( width, height );
-    float aspectRatio = ( 1.0f * width ) / height;
-
-    glm::vec3 lightPos = _camera.GetPosition();
-    _shader->SetUniform3f( "u_LightPos", lightPos );
-    _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
-
-    glm::mat4 model = glm::rotate(
-        glm::mat4( 1.0f ), _rotation, glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    glm::mat4 view = _camera.GetViewMatrix();
-    glm::mat4 projection =
-        _camera.GetProjectionMatrix( aspectRatio, 0.1f, 100.0f );
-
-    _shader->SetUniformMat4f( "u_M", model );
-    _shader->SetUniformMat4f( "u_V", view );
-    _shader->SetUniformMat4f( "u_P", projection );
-    _shader->SetUniform1i( "u_Emission", 0 );
-    _texture->Bind( 0 );
-    _shader->SetUniform1i( "u_Texture", 0 );
-
-    _normalMap->Bind( 1 );
-    _shader->SetUniform1i( "u_NormalMap", 1 );
-
-    static tgrRenderer r;
-    r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *_shader );
-
-    glm::vec3 titleColor = glm::vec3( 0.0f, 0.8f, 0.8f );
-    glm::vec3 descColor  = glm::vec3( 0.8f, 0.8f, 0.0f );
-
-    unsigned int ypos = 0;
-    r.SetFontSize( 32.0f );
-    r.DrawText( "MARS (Planet)", 32, ypos += 32, titleColor );
-
-    r.SetFontSize( 24.0f );
-    r.DrawText( "Diameter:          6794 km", 32, ypos += 24, descColor );
-    r.DrawText( "Distance from Sun: 228 million km (1.52 AU)",
-                32,
-                ypos += 24,
-                descColor );
-    r.DrawText(
-        "Year Length:       687 Earth Days", 32, ypos += 24, descColor );
-    r.DrawText( "Day Length:        24.6 Hours", 32, ypos += 24, descColor );
-    r.DrawText( "Axial Tilt:        25.19 degrees", 32, ypos += 24, descColor );
-    r.DrawText( "Surface Gravity:   3.71 m/(s*s)", 32, ypos += 24, descColor );
-
     auto fps =
         std::format( "FPS: {}", static_cast<int>( ImGui::GetIO().Framerate ) );
     r.DrawText( fps, width - 128, 32, glm::vec3( 0.5f, 0.5f, 0.5f ) );
@@ -156,7 +328,14 @@ void PlanetExplorer::Render()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::CreatePlanet()
+void PlanetExplorer::CreatePlanet( CelestialBody body )
+{
+    CreateSphereMesh();
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::CreateSphereMesh()
 {
     if ( _glMesh )
     {
@@ -259,6 +438,131 @@ void PlanetExplorer::CreateShader()
         std::make_unique<tgrTexture>( exeDir.string() + "/assets/mars.jpg" );
     _normalMap = std::make_unique<tgrTexture>( exeDir.string() +
                                                "/assets/mars_normal.jpg" );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::UpdateShaderCommon()
+{
+    // uniforms
+    if ( !_shader )
+    {
+        CreateShader();
+    }
+
+    _shader->Bind();
+    int width, height;
+    GetWindowSize( width, height );
+    float aspectRatio = ( 1.0f * width ) / height;
+
+    _shader->SetUniform3f( "u_LightPos", glm::vec3( 0.0f, 0.0f, 0.0f ) );
+    _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
+
+    glm::mat4 view = _camera.GetViewMatrix();
+    glm::mat4 projection =
+        _camera.GetProjectionMatrix( aspectRatio, 0.005f, 100.0f );
+
+    _shader->SetUniformMat4f( "u_V", view );
+    _shader->SetUniformMat4f( "u_P", projection );
+    _texture->Bind( 0 );
+    _shader->SetUniform1i( "u_Texture", 0 );
+
+    _normalMap->Bind( 1 );
+    _shader->SetUniform1i( "u_NormalMap", 1 );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::UpdateShader( CelestialBody body )
+{
+    assert( _shader );
+
+    //glm::mat4 model = glm::rotate(
+    //    glm::mat4( 1.0f ), _rotation, glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    const auto &info = PlanetsDB::GetInfo( body, true );
+
+    glm::mat4 model( 1.0f );
+
+    model = glm::translate( glm::mat4( 1.0f ),
+                            glm::vec3( info.solarDistance, 0.0f, 0.0f ) ) *
+            glm::scale( glm::mat4( 1.0f ),
+                        glm::vec3( info.radius, info.radius, info.radius ) );
+    _shader->SetUniformMat4f( "u_M", model );
+
+    _shader->SetUniform1i( "u_Emission", body == CelestialBody::Sun ? 1 : 0 );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::DrawPlanet()
+{
+    // Create planet if need be
+    CreatePlanet( CelestialBody::Mars );
+
+    // Draw planet
+    _glMesh->Vbo()->Bind();
+    _glMesh->Vao()->Bind();
+    _glMesh->Ibo()->Bind();
+
+    for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
+    {
+        UpdateShader( static_cast<CelestialBody>( ii ) );
+        r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *_shader );
+    }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::ShowPlanetInfo()
+{
+    glm::vec3 titleColor = glm::vec3( 0.0f, 0.8f, 0.8f );
+    glm::vec3 descColor  = glm::vec3( 0.8f, 0.8f, 0.0f );
+
+    const auto &info = PlanetsDB::GetInfo( CelestialBody::Mars );
+
+    unsigned int ypos = 0;
+    r.SetFontSize( 32.0f );
+
+    r.DrawText( std::format( "{} ({})", info.name, info.type ),
+                32,
+                ypos += 32,
+                titleColor );
+
+    r.SetFontSize( 24.0f );
+    r.DrawText(
+        std::format( "Diameter:          {:.0f} km", info.radius * 2 / 1000 ),
+        32,
+        ypos += 24,
+        descColor );
+
+    r.DrawText( std::format( "Distance from Sun: {:.0f} million km ({:.2f} AU)",
+                             info.solarDistance / 1'000'000'000,
+                             info.solarDistance * 6.6846E-12 ),
+                32,
+                ypos += 24,
+                descColor );
+
+    r.DrawText(
+        std::format( "Year Length:       {} Earth Days", info.daysInAYear ),
+        32,
+        ypos += 24,
+        descColor );
+
+    r.DrawText( std::format( "Day Length:        {} Hours", info.hoursInADay ),
+                32,
+                ypos += 24,
+                descColor );
+
+    r.DrawText( std::format( "Axial Tilt:        {} degrees", info.axialTilt ),
+                32,
+                ypos += 24,
+                descColor );
+
+    r.DrawText(
+        std::format( "Surface Gravity:   {} m/(s*s)", info.surfaceGravity ),
+        32,
+        ypos += 24,
+        descColor );
 }
 
 // -----------------------------------------------------------------------------
