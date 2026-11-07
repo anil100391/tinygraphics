@@ -249,10 +249,9 @@ void PlanetsDB::PopulateDB()
 PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     : tgrApplication( wprops, true )
 {
-    _camera.SetPosition( glm::vec3( -0.0f, 0.0f, 0.0f ) );
-
-    const auto &info = PlanetsDB::GetInfo( CelestialBody::Mars, true );
-    _camera.SetLookAt( glm::vec3( info.solarDistance, 0.0f, 0.0f ) );
+    const auto &info = PlanetsDB::GetInfo( CelestialBody::Saturn, true );
+    _camera.SetPosition( glm::vec3( 1.25f * info.solarDistance, 0.0f, info.solarDistance / 10 ) );
+    _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
     _camera.SetType( tgrCamera::PROJECTION::PERSPECTIVE );
 }
 
