@@ -68,19 +68,19 @@ private:
 
     void Render();
 
-    void CreatePlanet( CelestialBody body );
     void CreateShader();
 
-    void UpdateShaderCommon();
-    void UpdateShader( CelestialBody body );
+    std::unique_ptr<tgrShader>& UpdateShader( CelestialBody body );
 
-    void DrawPlanet();
+    void DrawCelestialBodies();
+    void BindSphereGeometry();
     void ShowPlanetInfo();
 
     void CreateSphereMesh();
 
     std::unique_ptr<tgrMeshGL>  _glMesh;
     std::unique_ptr<tgrShader>  _shader;
+    std::unique_ptr<tgrShader>  _sunShader;
     std::unique_ptr<tgrTexture> _texture;
     std::unique_ptr<tgrTexture> _normalMap;
 

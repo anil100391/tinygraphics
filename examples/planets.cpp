@@ -313,9 +313,7 @@ void PlanetExplorer::Render()
     glClearColor( 0.0, 0.0, 0.0, 0.0 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    UpdateShaderCommon();
-
-    DrawPlanet();
+    DrawCelestialBodies();
 
     ShowPlanetInfo();
 
@@ -324,13 +322,6 @@ void PlanetExplorer::Render()
     auto fps =
         std::format( "FPS: {}", static_cast<int>( ImGui::GetIO().Framerate ) );
     r.DrawText( fps, width - 128, 32, glm::vec3( 0.5f, 0.5f, 0.5f ) );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void PlanetExplorer::CreatePlanet( CelestialBody body )
-{
-    CreateSphereMesh();
 }
 
 // -----------------------------------------------------------------------------
@@ -434,6 +425,12 @@ void PlanetExplorer::CreateShader()
     std::filesystem::path fragmentShader( exeDir.string() +
                                           "/shaders/v3n3t2t3bt3_frag.glsl" );
     _shader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
+
+    std::filesystem::path sunFragShader(
+        exeDir.string() + "/assets/shaders/sun_frag.glsl" );
+
+    _sunShader = std::make_unique<tgrShader>( vertexShader, sunFragShader );
+
     _texture =
         std::make_unique<tgrTexture>( exeDir.string() + "/assets/mars.jpg" );
     _normalMap = std::make_unique<tgrTexture>( exeDir.string() +
@@ -442,73 +439,82 @@ void PlanetExplorer::CreateShader()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::UpdateShaderCommon()
+std::unique_ptr<tgrShader>& PlanetExplorer::UpdateShader( CelestialBody body )
 {
-    // uniforms
     if ( !_shader )
     {
         CreateShader();
     }
 
-    _shader->Bind();
+    auto &shaderToUse = body == CelestialBody::Sun ? _sunShader : _shader;
+
+    shaderToUse->Bind();
+
+    // ------------------------------------------------------------------------
+    // Light and Camera
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniform3f( "u_LightPos", glm::vec3( 0.0f, 0.0f, 0.0f ) );
+    shaderToUse->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
+
+    // ------------------------------------------------------------------------
+    // MVP transforms
+    // ------------------------------------------------------------------------
+    const auto &info = PlanetsDB::GetInfo( body, true );
+    glm::mat4 model =
+        glm::translate( glm::mat4( 1.0f ),
+                        glm::vec3( info.solarDistance, 0.0f, 0.0f ) ) *
+        glm::scale( glm::mat4( 1.0f ),
+                    glm::vec3( info.radius, info.radius, info.radius ) );
+
+    shaderToUse->SetUniformMat4f( "u_M", model );
+    shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
+
     int width, height;
     GetWindowSize( width, height );
-    float aspectRatio = ( 1.0f * width ) / height;
-
-    _shader->SetUniform3f( "u_LightPos", glm::vec3( 0.0f, 0.0f, 0.0f ) );
-    _shader->SetUniform3f( "u_CameraPos", _camera.GetPosition() );
-
-    glm::mat4 view = _camera.GetViewMatrix();
+    float     aspectRatio = ( 1.0f * width ) / height;
     glm::mat4 projection =
         _camera.GetProjectionMatrix( aspectRatio, 0.005f, 100.0f );
+    shaderToUse->SetUniformMat4f( "u_P", projection );
 
-    _shader->SetUniformMat4f( "u_V", view );
-    _shader->SetUniformMat4f( "u_P", projection );
+    // ------------------------------------------------------------------------
+    // celestial body texture
+    // ------------------------------------------------------------------------
     _texture->Bind( 0 );
-    _shader->SetUniform1i( "u_Texture", 0 );
+    shaderToUse->SetUniform1i( "u_Texture", 0 );
 
     _normalMap->Bind( 1 );
-    _shader->SetUniform1i( "u_NormalMap", 1 );
+    shaderToUse->SetUniform1i( "u_NormalMap", 1 );
+    return shaderToUse;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::UpdateShader( CelestialBody body )
+void PlanetExplorer::DrawCelestialBodies()
 {
-    assert( _shader );
+    BindSphereGeometry();
 
-    //glm::mat4 model = glm::rotate(
-    //    glm::mat4( 1.0f ), _rotation, glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    const auto &info = PlanetsDB::GetInfo( body, true );
-
-    glm::mat4 model( 1.0f );
-
-    model = glm::translate( glm::mat4( 1.0f ),
-                            glm::vec3( info.solarDistance, 0.0f, 0.0f ) ) *
-            glm::scale( glm::mat4( 1.0f ),
-                        glm::vec3( info.radius, info.radius, info.radius ) );
-    _shader->SetUniformMat4f( "u_M", model );
-
-    _shader->SetUniform1i( "u_Emission", body == CelestialBody::Sun ? 1 : 0 );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void PlanetExplorer::DrawPlanet()
-{
-    // Create planet if need be
-    CreatePlanet( CelestialBody::Mars );
-
-    // Draw planet
-    _glMesh->Vbo()->Bind();
-    _glMesh->Vao()->Bind();
-    _glMesh->Ibo()->Bind();
+    CreateShader();
 
     for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
     {
-        UpdateShader( static_cast<CelestialBody>( ii ) );
-        r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *_shader );
+        auto& shader = UpdateShader( static_cast<CelestialBody>( ii ) );
+        
+        r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *shader );
     }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::BindSphereGeometry()
+{
+    if ( !_glMesh )
+    {
+        CreateSphereMesh();
+    }
+
+    _glMesh->Vbo()->Bind();
+    _glMesh->Vao()->Bind();
+    _glMesh->Ibo()->Bind();
 }
 
 // -----------------------------------------------------------------------------
