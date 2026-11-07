@@ -70,7 +70,7 @@ private:
 
     void CreateShader();
 
-    std::unique_ptr<tgrShader>& UpdateShader( CelestialBody body );
+    std::unique_ptr<tgrShader>& UpdateCelestialBodyShader( CelestialBody body );
     std::unique_ptr<tgrShader>& UpdateOrbitShader( CelestialBody body );
 
     void DrawCelestialBodies();
