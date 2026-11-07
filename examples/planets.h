@@ -71,16 +71,21 @@ private:
     void CreateShader();
 
     std::unique_ptr<tgrShader>& UpdateShader( CelestialBody body );
+    std::unique_ptr<tgrShader>& UpdateOrbitShader( CelestialBody body );
 
     void DrawCelestialBodies();
-    void BindSphereGeometry();
+    void BindSphereGeometry( bool bind );
+    void BindEllipseGeometry( bool bind );
     void ShowPlanetInfo();
 
     void CreateSphereMesh();
+    void CreateEllipseMesh( float a, float b, size_t numSegments );
 
-    std::unique_ptr<tgrMeshGL>  _glMesh;
-    std::unique_ptr<tgrShader>  _shader;
+    std::unique_ptr<tgrMeshGL>  _sphereGLMesh;
+    std::unique_ptr<tgrMeshGL>  _ellipseGLMesh;
     std::unique_ptr<tgrShader>  _sunShader;
+    std::unique_ptr<tgrShader>  _planetShader;
+    std::unique_ptr<tgrShader>  _orbitShader;
     std::unique_ptr<tgrTexture> _texture;
     std::unique_ptr<tgrTexture> _normalMap;
 

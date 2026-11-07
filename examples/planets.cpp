@@ -42,7 +42,8 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
 
     if ( normalized )
     {
-        info.radius /= (0.01f * largestSolarDistance);
+        float rfac = body == CelestialBody::Sun ? 0.01f : 0.001f;
+        info.radius /= (rfac * largestSolarDistance);
         info.solarDistance /= largestSolarDistance;
     }
 
@@ -328,7 +329,7 @@ void PlanetExplorer::Render()
 // -----------------------------------------------------------------------------
 void PlanetExplorer::CreateSphereMesh()
 {
-    if ( _glMesh )
+    if ( _sphereGLMesh )
     {
         // already created
         return;
@@ -408,14 +409,56 @@ void PlanetExplorer::CreateSphereMesh()
         }
     }
 
-    _glMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
+    _sphereGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::CreateEllipseMesh( float a, float b, size_t numSegments )
+{
+    float e = std::sqrt( 1.0f - ( b * b ) / ( a * a ) );
+    glm::vec3 focus1( -e * a, 0.0f, 0.0f );
+    glm::vec3 focus2( e * a, 0.0f, 0.0f );
+
+    std::vector<float> vertices;
+    for ( size_t ii = 0; ii < numSegments; ++ii )
+    {
+        float theta =
+            ( 1.0f * ii / ( numSegments - 1 ) ) * 2 * std::numbers::pi;
+        float x = a * std::cos( theta );
+        float y = b * std::sin( theta );
+        float z = 0.0f;
+        
+        // position
+        vertices.push_back( x );
+        vertices.push_back( y );
+        vertices.push_back( z );
+
+        // texture coordinate
+        vertices.push_back( 0.5f * ( x / a + 1.0f ) );
+        vertices.push_back( 0.5f * ( y / b + 1.0f ) );
+    }
+
+    tgrVertexBufferLayout layout;
+    layout.Push<float>( 3 ); // position
+    layout.Push<float>( 2 ); // texture coordinate
+
+    std::vector<unsigned int> conn;
+    conn.reserve( 2 * numSegments );
+    for ( size_t ii = 0; ii < numSegments; ++ii )
+    {
+        conn.push_back( ii );
+        conn.push_back( ( ii + 1 ) % numSegments );
+    }
+
+    _ellipseGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void PlanetExplorer::CreateShader()
 {
-    if ( _shader )
+    if ( _planetShader )
     {
         return;
     }
@@ -424,12 +467,48 @@ void PlanetExplorer::CreateShader()
                                         "/shaders/v3n3t2t3bt3_vert.glsl" );
     std::filesystem::path fragmentShader( exeDir.string() +
                                           "/shaders/v3n3t2t3bt3_frag.glsl" );
-    _shader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
+    _planetShader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
 
     std::filesystem::path sunFragShader(
         exeDir.string() + "/assets/shaders/sun_frag.glsl" );
 
     _sunShader = std::make_unique<tgrShader>( vertexShader, sunFragShader );
+
+    // orbit shader
+    {
+        std::string orbitVShaderSrc = R"(
+
+#version 330 core
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texCoord;
+
+uniform mat4 u_M;
+uniform mat4 u_V;
+uniform mat4 u_P;
+
+out vec3 fragPos;
+out vec2 fragTexCoord;
+
+void main()
+{
+    gl_Position = u_P * u_V * u_M * vec4(position, 1.0);
+    fragPos = vec3(u_M * vec4(position, 1.0));
+    fragTexCoord = texCoord;
+})";
+
+        std::string orbitFShaderSrc = R"(
+#version 330 core
+in vec3 fragPos;
+in vec2 fragTexCoord;
+void main()
+{
+    gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+})";
+
+        _orbitShader =
+            std::make_unique<tgrShader>( orbitVShaderSrc, orbitFShaderSrc );
+    }
 
     _texture =
         std::make_unique<tgrTexture>( exeDir.string() + "/assets/mars.jpg" );
@@ -441,12 +520,12 @@ void PlanetExplorer::CreateShader()
 // -----------------------------------------------------------------------------
 std::unique_ptr<tgrShader>& PlanetExplorer::UpdateShader( CelestialBody body )
 {
-    if ( !_shader )
+    if ( !_planetShader )
     {
         CreateShader();
     }
 
-    auto &shaderToUse = body == CelestialBody::Sun ? _sunShader : _shader;
+    auto &shaderToUse = body == CelestialBody::Sun ? _sunShader : _planetShader;
 
     shaderToUse->Bind();
 
@@ -489,32 +568,111 @@ std::unique_ptr<tgrShader>& PlanetExplorer::UpdateShader( CelestialBody body )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+std::unique_ptr<tgrShader> &
+PlanetExplorer::UpdateOrbitShader( CelestialBody body )
+{
+    if ( !_orbitShader )
+    {
+        CreateShader();
+    }
+
+    auto &shaderToUse = _orbitShader;
+
+    shaderToUse->Bind();
+
+    // ------------------------------------------------------------------------
+    // MVP transforms
+    // ------------------------------------------------------------------------
+    const auto &info  = PlanetsDB::GetInfo( body, true );
+    glm::mat4   model = glm::scale( glm::mat4( 1.0f ),
+                                    glm::vec3( info.solarDistance,
+                                               info.solarDistance,
+                                               info.solarDistance ) );
+
+    shaderToUse->SetUniformMat4f( "u_M", model );
+    shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
+
+    int width, height;
+    GetWindowSize( width, height );
+    float     aspectRatio = ( 1.0f * width ) / height;
+    glm::mat4 projection =
+        _camera.GetProjectionMatrix( aspectRatio, 0.005f, 100.0f );
+    shaderToUse->SetUniformMat4f( "u_P", projection );
+    return shaderToUse;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void PlanetExplorer::DrawCelestialBodies()
 {
-    BindSphereGeometry();
-
     CreateShader();
 
+    BindSphereGeometry( true );
     for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
     {
         auto& shader = UpdateShader( static_cast<CelestialBody>( ii ) );
-        
-        r.Draw( *_glMesh->Vao(), *_glMesh->Ibo(), *shader );
+        r.Draw( *_sphereGLMesh->Vao(), *_sphereGLMesh->Ibo(), *shader );
+    }
+    BindSphereGeometry( false );
+
+    BindEllipseGeometry( true );
+    for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
+    {
+        UpdateOrbitShader( static_cast<CelestialBody>( ii ) );
+
+        // Draw orbit
+        r.Draw( *_ellipseGLMesh->Vao(),
+                *_ellipseGLMesh->Ibo(),
+                *_orbitShader,
+                tgrRenderer::LINES );
+    }
+    BindEllipseGeometry( false );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::BindSphereGeometry( bool bind )
+{
+    if ( bind )
+    {
+        if ( !_sphereGLMesh )
+        {
+            CreateSphereMesh();
+        }
+
+        _sphereGLMesh->Vbo()->Bind();
+        _sphereGLMesh->Vao()->Bind();
+        _sphereGLMesh->Ibo()->Bind();
+    }
+    else if ( _sphereGLMesh )
+    {
+        _sphereGLMesh->Vbo()->Unbind();
+        _sphereGLMesh->Vao()->Unbind();
+        _sphereGLMesh->Ibo()->Unbind();
     }
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::BindSphereGeometry()
+void PlanetExplorer::BindEllipseGeometry( bool bind )
 {
-    if ( !_glMesh )
+    if ( bind )
     {
-        CreateSphereMesh();
-    }
+        if ( !_ellipseGLMesh )
+        {
+            CreateEllipseMesh( 1.0f, 1.0f, 100 );
+        }
 
-    _glMesh->Vbo()->Bind();
-    _glMesh->Vao()->Bind();
-    _glMesh->Ibo()->Bind();
+        _ellipseGLMesh->Vbo()->Bind();
+        _ellipseGLMesh->Vao()->Bind();
+        _ellipseGLMesh->Ibo()->Bind();
+    }
+    else if (_ellipseGLMesh)
+    {
+        _ellipseGLMesh->Vbo()->Unbind();
+        _ellipseGLMesh->Vao()->Unbind();
+        _ellipseGLMesh->Ibo()->Unbind();
+    }
 }
 
 // -----------------------------------------------------------------------------
