@@ -470,10 +470,12 @@ void PlanetExplorer::CreateShader()
                                           "/shaders/v3n3t2t3bt3_frag.glsl" );
     _planetShader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
 
+    std::filesystem::path sunVertShader( exeDir.string() +
+                                         "/assets/shaders/sun_vert.glsl" );
     std::filesystem::path sunFragShader( exeDir.string() +
                                          "/assets/shaders/sun_frag.glsl" );
 
-    _sunShader = std::make_unique<tgrShader>( vertexShader, sunFragShader );
+    _sunShader = std::make_unique<tgrShader>( sunVertShader, sunFragShader );
 
     // orbit shader
     {
@@ -532,6 +534,11 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     shaderToUse->Bind();
 
     // ------------------------------------------------------------------------
+    // Time
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniform1f( "u_Time", GetCurrentTime() );
+
+    // ------------------------------------------------------------------------
     // Light and Camera
     // ------------------------------------------------------------------------
     shaderToUse->SetUniform3f( "u_LightPos", glm::vec3( 0.0f, 0.0f, 0.0f ) );
@@ -568,11 +575,15 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // celestial body texture
     // ------------------------------------------------------------------------
-    _texture->Bind( 0 );
-    shaderToUse->SetUniform1i( "u_Texture", 0 );
+    if ( body != CelestialBody::Sun )
+    {
+        _texture->Bind( 0 );
+        shaderToUse->SetUniform1i( "u_Texture", 0 );
 
-    _normalMap->Bind( 1 );
-    shaderToUse->SetUniform1i( "u_NormalMap", 1 );
+        _normalMap->Bind( 1 );
+        shaderToUse->SetUniform1i( "u_NormalMap", 1 );
+    }
+
     return shaderToUse;
 }
 
