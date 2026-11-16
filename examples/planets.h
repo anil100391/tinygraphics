@@ -150,4 +150,7 @@ private:
 
     class Simulator;
     Simulator *_simulator = nullptr;
+
+    class CameraAnimator;
+    CameraAnimator *_cameraAnimator = nullptr;
 };

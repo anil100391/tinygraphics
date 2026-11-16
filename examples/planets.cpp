@@ -256,6 +256,65 @@ void PlanetExplorer::Simulator::Update( float time )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+class PlanetExplorer::CameraAnimator
+{
+public:
+    CameraAnimator( tgrCamera &camera ) : _camera( camera )
+    {
+    }
+
+    ~CameraAnimator() = default;
+
+    void StartAnimation( const glm::vec3 &targetLookAt,
+                         float            startTime,
+                         float            duration )
+    {
+        _startLookAt  = _camera.GetLookAt();
+        _targetLookAt = targetLookAt;
+        _startTime    = startTime;
+        _duration     = duration;
+
+        _startPos = _camera.GetPosition();
+        float intialDistanceFromTarget =
+            glm::length( _startPos - _startLookAt );
+        _targetPos =
+            _targetLookAt + glm::normalize( _startPos - _targetLookAt ) *
+                                intialDistanceFromTarget;
+    }
+
+    bool Update( float currentTime )
+    {
+        if ( currentTime >= _startTime + _duration )
+        {
+            return false;
+        }
+
+        float t = ( currentTime - _startTime ) / _duration;
+        t       = std::clamp( t, 0.0f, 1.0f );
+
+        glm::vec3 newLookAt = ( 1.0f - t ) * _startLookAt + t * _targetLookAt;
+        _camera.SetLookAt( newLookAt );
+
+        glm::vec3 newPos = ( 1.0f - t ) * _startPos + t * _targetPos;
+        _camera.SetPosition( newPos );
+
+        return true;
+    }
+
+private:
+    tgrCamera &_camera;
+    glm::vec3  _startLookAt;
+    glm::vec3  _targetLookAt;
+    float      _startTime;
+    float      _duration;
+
+    // internally computed
+    glm::vec3 _startPos;
+    glm::vec3 _targetPos;
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     : tgrApplication( wprops, true )
 {
@@ -282,6 +341,7 @@ PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
 PlanetExplorer::~PlanetExplorer()
 {
     delete _simulator;
+    delete _cameraAnimator;
 }
 
 // -----------------------------------------------------------------------------
@@ -305,8 +365,11 @@ void PlanetExplorer::Update()
     }
 
     // update camera
-    const auto &info = _simulator->GetData( ToBody( _selectedBody ) );
-    _camera.SetLookAt( info.location / largestSolarDistance );
+    if ( !_cameraAnimator || !_cameraAnimator->Update( GetCurrentTime() ) )
+    {
+        const auto &info = _simulator->GetData( ToBody( _selectedBody ) );
+        _camera.SetLookAt( info.location / largestSolarDistance );
+    }
 
     Render();
 
@@ -336,7 +399,20 @@ void PlanetExplorer::Update()
             bool                 isSelected = ( _selectedBody == n );
             ImGuiSelectableFlags flags       = 0;
             if ( ImGui::Selectable( bodyNames[n], isSelected, flags ) )
+            {
+                if (!_cameraAnimator)
+                {
+                    _cameraAnimator = new CameraAnimator( _camera );
+                }
+
+                const auto &info = _simulator->GetData( ToBody( n ) );
+                _cameraAnimator->StartAnimation( info.location /
+                                                     largestSolarDistance,
+                                                 GetCurrentTime(),
+                                                 2.0f );
+
                 _selectedBody = n;
+            }
 
             // Set the initial focus when opening the combo (scrolling +
             // keyboard navigation focus)
