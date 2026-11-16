@@ -35,6 +35,18 @@ constexpr int ToIndex( CelestialBody body )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+constexpr CelestialBody ToBody( int index )
+{
+    if ( index < 0 || index >= static_cast<int>( CelestialBody::Count ) )
+    {
+        throw std::out_of_range( "Invalid CelestialBody index" );
+    }
+
+    return static_cast<CelestialBody>( index );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 std::string ToLower(std::string s)
 {
     std::transform( s.begin(),
@@ -82,7 +94,7 @@ class PlanetExplorer : public tgrApplication
 {
 public:
     PlanetExplorer( const tgrWindowProperties &wprops );
-    virtual ~PlanetExplorer() = default;
+    virtual ~PlanetExplorer();
 
     virtual void Update() override;
     virtual bool OnEvent( tgrEvent &evt ) override;
@@ -117,6 +129,10 @@ private:
 
     tgrCamera _camera;
 
+    int   _selectedBody = 0;
     float _rotation = 0.0f;
     bool  _running  = true;
+
+    class Simulator;
+    Simulator *_simulator = nullptr;
 };

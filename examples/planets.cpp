@@ -246,13 +246,86 @@ void PlanetsDB::PopulateDB()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+class PlanetExplorer::Simulator
+{
+public:
+    Simulator();
+    ~Simulator() = default;
+
+    void Update( float time );
+
+    struct Data
+    {
+        glm::vec3 location;
+        float     rotation;
+    };
+
+    const Data &GetData( CelestialBody body )
+    {
+        return _data[ToIndex( body )];
+    }
+
+private:
+
+
+    float _time = 0.0f;
+    std::vector<Data> _data;
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+PlanetExplorer::Simulator::Simulator()
+{
+    _data.resize( NumBodies );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::Simulator::Update( float time )
+{
+    _time = time;
+
+    for ( auto ii = 0; ii < NumBodies; ++ii )
+    {
+        auto        body = ToBody( ii );
+        const auto &info = PlanetsDB::GetInfo( body, false );
+
+        // body position
+        float angularVelAroundSun =
+            ( body == CelestialBody::Sun )
+                ? 0.0f
+                : 2.0f * std::numbers::pi /
+                      ( info.daysInAYear * 24.0f * 3600.0f );
+        float theta        = _time * angularVelAroundSun;
+        _data[ii].location = glm::vec3( info.solarDistance * std::cos( theta ),
+                                        info.solarDistance * std::sin( theta ),
+                                        0.0f );
+
+        // body rotation about it's own axis
+        float angularVelAboutOwnAxis =
+            2.0f * std::numbers::pi / ( info.hoursInADay * 3600.0f );
+        float phi          = _time * angularVelAboutOwnAxis;
+        _data[ii].rotation = phi;
+    }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     : tgrApplication( wprops, true )
 {
     _camera.SetPosition( glm::vec3( -0.0014663, 0.0356589, 0.00140489 ) );
+    _camera.SetPosition( glm::vec3( 0.0f, 0.0f, 0.0140489 ) );
     _camera.SetUpVec( glm::vec3( -0.151733, -0.0486303, 0.987225 ) );
-    _camera.SetLookAt( glm::vec3( 0.0f, 0.0f, 0.0f ) );
+    _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
     _camera.SetType( tgrCamera::PROJECTION::PERSPECTIVE );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+PlanetExplorer::~PlanetExplorer()
+{
+    delete _simulator;
 }
 
 // -----------------------------------------------------------------------------
@@ -264,24 +337,48 @@ void PlanetExplorer::Update()
         _rotation = -0.5 * GetCurrentTime();
     }
 
+    if ( !_simulator )
+    {
+        _simulator = new Simulator;
+    }
+
+    _simulator->Update( 3600.0f * 24.0f * GetCurrentTime() );
+
+    // update camera
+    const auto &info = _simulator->GetData( ToBody( _selectedBody ) );
+    _camera.SetLookAt( info.location / largestSolarDistance );
+
     Render();
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    // ImGui::Begin( "Debug" );
-    // auto pos = _camera.GetPosition();
-    // ImGui::Text( "Camera: (%f, %f, %f)", pos.x, pos.y, pos.z );
-    // ImGui::End();
-    //
+    // ImGui::ShowDemoWindow();
+    
+    const char *bodyNames[NumBodies] = { "Sun",
+                                         "Mercury",
+                                         "Venus",
+                                         "Earth",
+                                         "Mars",
+                                         "Jupiter",
+                                         "Saturn",
+                                         "Uranus",
+                                         "Neptune",
+                                         "Pluto" };
+
+    ImGui::Begin( "Explore" );
+    ImGui::ListBox( "##Celestial Body",
+                    reinterpret_cast<int *>( &_selectedBody ),
+                    bodyNames,
+                    NumBodies );
+    ImGui::End();
+
     // ImGui::Begin( "Performance" );
-    //
     // ImGuiIO &io = ImGui::GetIO();
     // ImGui::Text( "FPS: %.1f", io.Framerate );
     // ImGui::Text( "Frame time: %.3f ms", 1000.0f / io.Framerate );
-    //
     // ImGui::End();
-    //
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
@@ -575,18 +672,14 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // MVP transforms
     // ------------------------------------------------------------------------
-    constexpr float earthYearScaled = 20.0f; // seconds
-    float           time            = GetCurrentTime();
-    const auto     &info            = PlanetsDB::GetInfo( body, true );
-    float     bodyYearScaled = info.daysInAYear * earthYearScaled / 365.0f;
-    float     theta = ( body == CelestialBody::Sun )
-                          ? 0.0f
-                          : time * 2.0f * std::numbers::pi / bodyYearScaled;
-    glm::mat4 model =
-        glm::translate( glm::mat4( 1.0f ),
-                        glm::vec3( info.solarDistance * std::cos( theta ),
-                                   info.solarDistance * std::sin( theta ),
-                                   0.0f ) ) *
+    const auto &info           = PlanetsDB::GetInfo( body, true );
+    const auto &simData        = _simulator->GetData( body );
+    glm::vec    location = simData.location / largestSolarDistance;
+    glm::mat4   model =
+        glm::translate( glm::mat4( 1.0f ), location ) *
+        glm::rotate( glm::mat4( 1.0f ),
+                     simData.rotation,
+                     glm::vec3( 0.0f, 0.0f, 1.0f ) ) *
         glm::scale( glm::mat4( 1.0f ),
                     glm::vec3( info.radius, info.radius, info.radius ) );
 
@@ -749,7 +842,7 @@ void PlanetExplorer::ShowPlanetInfo()
     glm::vec3 titleColor = glm::vec3( 0.0f, 0.8f, 0.8f );
     glm::vec3 descColor  = glm::vec3( 0.8f, 0.8f, 0.0f );
 
-    const auto &info = PlanetsDB::GetInfo( CelestialBody::Mars );
+    const auto &info = PlanetsDB::GetInfo( ToBody( _selectedBody ) );
 
     unsigned int ypos = 0;
     r.SetFontSize( 32.0f );
