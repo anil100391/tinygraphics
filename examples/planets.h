@@ -20,6 +20,7 @@ enum class CelestialBody
     Mars,
     Jupiter,
     Saturn,
+    SaturnRings,
     Uranus,
     Neptune,
     Pluto,
@@ -47,13 +48,24 @@ constexpr CelestialBody ToBody( int index )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-std::string ToLower(std::string s)
+std::string ToLower( std::string s, const char whiteSpaceReplacer = '_' )
 {
     std::transform( s.begin(),
                     s.end(),
                     s.begin(),
-                    []( unsigned char c ) { return std::tolower( c ); } );
+                    [whiteSpaceReplacer]( unsigned char c )
+                    {
+                        return std::tolower( c ) == ' ' ? whiteSpaceReplacer
+                                                        : std::tolower( c );
+                    } );
     return s;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+float ToRadians( float degrees )
+{
+    return degrees * std::numbers::pi / 180.0f;
 }
 
 // -----------------------------------------------------------------------------
@@ -108,17 +120,20 @@ private:
     std::unique_ptr<tgrShader>& UpdateCelestialBodyShader( CelestialBody body );
     std::unique_ptr<tgrShader>& UpdateOrbitShader( CelestialBody body );
 
+    std::unique_ptr<tgrMeshGL> &GetGLMesh( CelestialBody body, bool createIfNull );
     std::unique_ptr<tgrShader> &GetShader( CelestialBody body );
 
     void DrawCelestialBodies();
-    void BindSphereGeometry( bool bind );
+    void BindGLMesh( std::unique_ptr<tgrMeshGL> &meshGL, bool bind );
     void BindEllipseGeometry( bool bind );
     void ShowPlanetInfo();
 
     void CreateSphereMesh();
+    void CreateRingsMesh( float innerRadius, float outerRadius );
     void CreateEllipseMesh( float a, float b, size_t numSegments );
 
     std::unique_ptr<tgrMeshGL>  _sphereGLMesh;
+    std::unique_ptr<tgrMeshGL>  _ringsGLMesh;
     std::unique_ptr<tgrMeshGL>  _ellipseGLMesh;
     std::unique_ptr<tgrShader>  _sunShader;
     std::unique_ptr<tgrShader>  _planetShaderWithDepthMap;

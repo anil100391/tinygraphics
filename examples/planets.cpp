@@ -40,7 +40,7 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
         PopulateDB();
     }
 
-    auto info = s_database[static_cast<size_t>( body )];
+    auto info = s_database[ToIndex( body )];
 
     if ( normalized )
     {
@@ -119,6 +119,15 @@ void PlanetsDB::PopulateDB()
                      10.656f,
                      26.73f,
                      8.96f },
+                   { "Saturn Rings",
+                     "Planet Ring",
+                     1.4022e8f,
+                     0.0f,
+                     1.4335e12f,
+                     10759.2f,
+                     10.656f,
+                     26.73f,
+                     8.96f },
                    { "Uranus",
                      "Planet",
                      2.5362e7f,
@@ -148,100 +157,6 @@ void PlanetsDB::PopulateDB()
                      0.66f } };
 
     s_database.resize( NumBodies );
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Sun )];
-    //    info.name   = "Sun";
-    //    info.type   = "Star";
-    //    info.radius = 0.0f;
-    //    info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Mercury
-    //    )]; info.name   = "Mercury"; info.radius = 0.0f; info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Venus )];
-    //    info.name   = "Venus";
-    //    info.radius = 0.0f;
-    //    info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Earth )];
-    //    info.name   = "Earth";
-    //    info.radius = 0.0f;
-    //    info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Mars )];
-    //    info.name   = "Mars";
-    //    info.radius = 6'794'000 / 2;
-    //    info.mass   = 0.0f;
-    //    info.solarDistance = 228'000'000'000;
-    //    info.solarDistance /= 4'000'000'000;
-    //    info.daysInAYear    = 687;
-    //    info.hoursInADay    = 24.6f;
-    //    info.axialTilt      = 25.19f;
-    //    info.surfaceGravity = 3.71f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Jupiter
-    //    )]; info.name   = "Jupiter"; info.radius = 0.0f; info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Saturn
-    //    )]; info.name   = "Saturn"; info.radius = 0.0f; info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Uranus
-    //    )]; info.name   = "Uranus"; info.radius = 0.0f; info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Neptune
-    //    )]; info.name   = "Neptue"; info.radius = 0.0f; info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
-
-    //{
-    //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Pluto )];
-    //    info.name   = "Pluto";
-    //    info.radius = 0.0f;
-    //    info.mass   = 0.0f;
-    //    info.solarDistance = 0.0f;
-    //    info.daysInAYear   = 0.0f;
-    //    info.hoursInADay   = 0.0f;
-    //}
 }
 
 // -----------------------------------------------------------------------------
@@ -342,7 +257,10 @@ void PlanetExplorer::Update()
         _simulator = new Simulator;
     }
 
-    _simulator->Update( 3600.0f * 24.0f * GetCurrentTime() );
+    if ( _running )
+    {
+        _simulator->Update( 3600.0f * 24.0f * GetCurrentTime() );
+    }
 
     // update camera
     const auto &info = _simulator->GetData( ToBody( _selectedBody ) );
@@ -362,6 +280,7 @@ void PlanetExplorer::Update()
                                          "Mars",
                                          "Jupiter",
                                          "Saturn",
+                                         "Saturn Rings",
                                          "Uranus",
                                          "Neptune",
                                          "Pluto" };
@@ -409,7 +328,7 @@ void PlanetExplorer::Render()
     glEnable( GL_CULL_FACE );
 
     // Clear screen to draw
-    glClearColor( 0.0, 0.0, 0.0, 0.0 );
+    glClearColor( 0.0, 0.0, 0.0, 1.0 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     DrawCelestialBodies();
@@ -508,6 +427,73 @@ void PlanetExplorer::CreateSphereMesh()
     }
 
     _sphereGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
+}
+
+// ------------------------------------------------------------------
+// ------------------------------------------------------------------
+void PlanetExplorer::CreateRingsMesh( float innerRadius, float outerRadius )
+{
+    if ( _ringsGLMesh )
+    {
+        // already created
+        return;
+    }
+
+    // Create a ring mesh
+    // vertices
+    std::vector<float> vertices;
+    const size_t       numRSegments     = 2;
+    const size_t       numThetaSegments = 128;
+    for ( size_t ii = 0; ii < numThetaSegments; ++ii )
+    {
+        float u     = ( 1.0f * ii / ( numThetaSegments - 1 ) );
+        float cosTheta = std::cos( u * 2 * std::numbers::pi );
+        float sinTheta = std::sin( u * 2 * std::numbers::pi );
+        for ( size_t jj = 0; jj < numRSegments; ++jj )
+        {
+            float v = ( 1.0f * jj / ( numRSegments - 1 ) ); // [0, 1]
+            float R = ( 1.0f - v ) * innerRadius + v * outerRadius;
+            float x = R * cosTheta;
+            float y = R * sinTheta;
+
+            // position
+            vertices.push_back( x );
+            vertices.push_back( y );
+            vertices.push_back( 0.0f );
+
+            // normal
+            vertices.push_back( 0.0f );
+            vertices.push_back( 0.0f );
+            vertices.push_back( 1.0f );
+
+            // tex coordinates
+            vertices.push_back( 0.0f );
+            vertices.push_back( v );
+        }
+    }
+
+    tgrVertexBufferLayout layout;
+    layout.Push<float>( 3 ); // position
+    layout.Push<float>( 3 ); // normal
+    layout.Push<float>( 2 ); // texture coordiante
+
+    // triangles
+    std::vector<unsigned int> conn;
+    for ( size_t ii = 0; ii < numThetaSegments - 1; ++ii )
+    {
+        for ( size_t jj = 0; jj < numRSegments - 1; ++jj )
+        {
+            conn.push_back( ( ii * numRSegments ) + jj );
+            conn.push_back( ( ( ii + 1 ) * numRSegments ) + jj + 1u );
+            conn.push_back( ( ii * numRSegments ) + jj + 1u );
+
+            conn.push_back( ( ii * numRSegments ) + jj );
+            conn.push_back( ( ( ii + 1 ) * numRSegments ) + jj );
+            conn.push_back( ( ( ii + 1 ) * numRSegments ) + jj + 1u );
+        }
+    }
+
+    _ringsGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
 }
 
 // -----------------------------------------------------------------------------
@@ -626,8 +612,7 @@ void main()
 
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
-        const auto &info =
-            PlanetsDB::GetInfo( static_cast<CelestialBody>( ii ) );
+        const auto           &info = PlanetsDB::GetInfo( ToBody( ii ) );
         std::filesystem::path colorTexFile =
             exeDir.string() + "/assets/" + ToLower( info.name ) + ".jpg";
         if ( std::filesystem::exists( colorTexFile ) )
@@ -676,12 +661,15 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     const auto &simData        = _simulator->GetData( body );
     glm::vec    location = simData.location / largestSolarDistance;
     glm::mat4   model =
-        glm::translate( glm::mat4( 1.0f ), location ) *
+        glm::translate( glm::mat4( 1.0f ), location ) * // position
+        glm::rotate( glm::mat4( 1.0f ),
+                     ToRadians( info.axialTilt ),
+                     glm::vec3( 0.0f, -1.0f, 0.0f ) ) * // axial tilt
         glm::rotate( glm::mat4( 1.0f ),
                      simData.rotation,
-                     glm::vec3( 0.0f, 0.0f, 1.0f ) ) *
+                     glm::vec3( 0.0f, 0.0f, 1.0f ) ) * // axial rotation
         glm::scale( glm::mat4( 1.0f ),
-                    glm::vec3( info.radius, info.radius, info.radius ) );
+                    glm::vec3( info.radius, info.radius, info.radius ) ); // size
 
     shaderToUse->SetUniformMat4f( "u_M", model );
     shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
@@ -750,6 +738,34 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+std::unique_ptr<tgrMeshGL> &PlanetExplorer::GetGLMesh( CelestialBody body,
+                                                       bool createIfNull )
+{
+    switch ( body )
+    {
+    case CelestialBody::SaturnRings:
+    {
+        if ( createIfNull && !_ringsGLMesh )
+        {
+            CreateRingsMesh( 0.5f, 1.0f );
+        }
+
+        return _ringsGLMesh;
+    }
+    default:
+    {
+        if ( createIfNull && !_sphereGLMesh )
+        {
+            CreateSphereMesh();
+        }
+
+        return _sphereGLMesh;
+    }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
 {
     switch ( body )
@@ -766,19 +782,36 @@ void PlanetExplorer::DrawCelestialBodies()
 {
     CreateShader();
 
-    BindSphereGeometry( true );
-    for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
+    // Draw celestial bodies
+    for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
-        auto &shader =
-            UpdateCelestialBodyShader( static_cast<CelestialBody>( ii ) );
-        r.Draw( *_sphereGLMesh->Vao(), *_sphereGLMesh->Ibo(), *shader );
-    }
-    BindSphereGeometry( false );
+        auto  body   = ToBody( ii );
 
+        // Since we want to see 2d rings mesh from both sides
+        if ( body == CelestialBody::SaturnRings )
+        {
+            glDisable( GL_CULL_FACE );
+        }
+
+        auto &meshGL = GetGLMesh( body, true );
+        BindGLMesh( meshGL, true );
+        auto &shader = UpdateCelestialBodyShader( body );
+
+        r.Draw( *meshGL->Vao(), *meshGL->Ibo(), *shader );
+
+        BindGLMesh( meshGL, false );
+
+        if ( body == CelestialBody::SaturnRings )
+        {
+            glEnable( GL_CULL_FACE );
+        }
+    }
+
+    // Draw orbits
     BindEllipseGeometry( true );
-    for ( auto ii = 0u; ii < static_cast<size_t>( CelestialBody::Count ); ++ii )
+    for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
-        UpdateOrbitShader( static_cast<CelestialBody>( ii ) );
+        UpdateOrbitShader( ToBody( ii ) );
 
         // Draw orbit
         r.Draw( *_ellipseGLMesh->Vao(),
@@ -791,24 +824,22 @@ void PlanetExplorer::DrawCelestialBodies()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::BindSphereGeometry( bool bind )
+void PlanetExplorer::BindGLMesh( std::unique_ptr<tgrMeshGL> &meshGL, bool bind )
 {
-    if ( bind )
+    if ( meshGL )
     {
-        if ( !_sphereGLMesh )
+        if ( bind )
         {
-            CreateSphereMesh();
+            meshGL->Vbo()->Bind();
+            meshGL->Vao()->Bind();
+            meshGL->Ibo()->Bind();
         }
-
-        _sphereGLMesh->Vbo()->Bind();
-        _sphereGLMesh->Vao()->Bind();
-        _sphereGLMesh->Ibo()->Bind();
-    }
-    else if ( _sphereGLMesh )
-    {
-        _sphereGLMesh->Vbo()->Unbind();
-        _sphereGLMesh->Vao()->Unbind();
-        _sphereGLMesh->Ibo()->Unbind();
+        else if ( meshGL )
+        {
+            meshGL->Vbo()->Unbind();
+            meshGL->Vao()->Unbind();
+            meshGL->Ibo()->Unbind();
+        }
     }
 }
 
