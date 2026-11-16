@@ -147,7 +147,7 @@ void PlanetsDB::PopulateDB()
                      122.54f,
                      0.66f } };
 
-    s_database.resize( static_cast<size_t>( CelestialBody::Count ) );
+    s_database.resize( NumBodies );
 
     //{
     //    auto &info  = s_database[static_cast<size_t>( CelestialBody::Sun )];
@@ -464,11 +464,25 @@ void PlanetExplorer::CreateShader()
         return;
     }
 
-    std::filesystem::path vertexShader( exeDir.string() +
-                                        "/shaders/v3n3t2t3bt3_vert.glsl" );
-    std::filesystem::path fragmentShader( exeDir.string() +
-                                          "/shaders/v3n3t2t3bt3_frag.glsl" );
-    _planetShader = std::make_unique<tgrShader>( vertexShader, fragmentShader );
+    // Shader with surface colors only
+    {
+        std::filesystem::path vertexShader( exeDir.string() +
+                                            "/shaders/v3n3t2_vert.glsl" );
+        std::filesystem::path fragmentShader( exeDir.string() +
+                                              "/shaders/v3n3t2_frag.glsl" );
+        _planetShader =
+            std::make_unique<tgrShader>( vertexShader, fragmentShader );
+    }
+
+    // Shader with surface color and depth map
+    {
+        std::filesystem::path vertexShader( exeDir.string() +
+                                            "/shaders/v3n3t2t3bt3_vert.glsl" );
+        std::filesystem::path fragmentShader(
+            exeDir.string() + "/shaders/v3n3t2t3bt3_frag.glsl" );
+        _planetShaderWithDepthMap =
+            std::make_unique<tgrShader>( vertexShader, fragmentShader );
+    }
 
     std::filesystem::path sunVertShader( exeDir.string() +
                                          "/assets/shaders/sun_vert.glsl" );
@@ -513,10 +527,24 @@ void main()
             std::make_unique<tgrShader>( orbitVShaderSrc, orbitFShaderSrc );
     }
 
-    _texture =
-        std::make_unique<tgrTexture>( exeDir.string() + "/assets/mars.jpg" );
-    _normalMap = std::make_unique<tgrTexture>( exeDir.string() +
-                                               "/assets/mars_normal.jpg" );
+    for ( auto ii = 0; ii < NumBodies; ++ii )
+    {
+        const auto &info =
+            PlanetsDB::GetInfo( static_cast<CelestialBody>( ii ) );
+        std::filesystem::path colorTexFile =
+            exeDir.string() + "/assets/" + ToLower( info.name ) + ".jpg";
+        if ( std::filesystem::exists( colorTexFile ) )
+        {
+            _textures[ii] = std::make_unique<tgrTexture>( colorTexFile );
+        }
+
+        std::filesystem::path normalTexFile =
+            exeDir.string() + "/assets/" + ToLower( info.name ) + "_normal.jpg";
+        if ( std::filesystem::exists( normalTexFile ) )
+        {
+            _normalMaps[ii] = std::make_unique<tgrTexture>( normalTexFile );
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -529,7 +557,7 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
         CreateShader();
     }
 
-    auto &shaderToUse = body == CelestialBody::Sun ? _sunShader : _planetShader;
+    auto &shaderToUse = GetShader( body );
 
     shaderToUse->Bind();
 
@@ -575,13 +603,18 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // celestial body texture
     // ------------------------------------------------------------------------
-    if ( body != CelestialBody::Sun )
+    auto &colorTex = _textures[ToIndex( body )];
+    if ( colorTex )
     {
-        _texture->Bind( 0 );
+        colorTex->Bind( 0 );
         shaderToUse->SetUniform1i( "u_Texture", 0 );
 
-        _normalMap->Bind( 1 );
-        shaderToUse->SetUniform1i( "u_NormalMap", 1 );
+        auto &normalMap = _normalMaps[ToIndex( body )];
+        if ( normalMap )
+        {
+            normalMap->Bind( 1 );
+            shaderToUse->SetUniform1i( "u_NormalMap", 1 );
+        }
     }
 
     return shaderToUse;
@@ -620,6 +653,18 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
         _camera.GetProjectionMatrix( aspectRatio, near_plane, far_plane );
     shaderToUse->SetUniformMat4f( "u_P", projection );
     return shaderToUse;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
+{
+    switch ( body )
+    {
+    case CelestialBody::Sun:  return _sunShader;
+    case CelestialBody::Mars: return _planetShaderWithDepthMap;
+    default:                  return _planetShader;
+    }
 }
 
 // -----------------------------------------------------------------------------

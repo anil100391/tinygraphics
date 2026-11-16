@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <tinygraphics/app.h>
 
@@ -24,6 +25,28 @@ enum class CelestialBody
     Pluto,
     Count
 };
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+constexpr int ToIndex( CelestialBody body )
+{
+    return static_cast<int>( body );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+std::string ToLower(std::string s)
+{
+    std::transform( s.begin(),
+                    s.end(),
+                    s.begin(),
+                    []( unsigned char c ) { return std::tolower( c ); } );
+    return s;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+constexpr int NumBodies = ToIndex( CelestialBody::Count );
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -73,6 +96,8 @@ private:
     std::unique_ptr<tgrShader>& UpdateCelestialBodyShader( CelestialBody body );
     std::unique_ptr<tgrShader>& UpdateOrbitShader( CelestialBody body );
 
+    std::unique_ptr<tgrShader> &GetShader( CelestialBody body );
+
     void DrawCelestialBodies();
     void BindSphereGeometry( bool bind );
     void BindEllipseGeometry( bool bind );
@@ -84,10 +109,11 @@ private:
     std::unique_ptr<tgrMeshGL>  _sphereGLMesh;
     std::unique_ptr<tgrMeshGL>  _ellipseGLMesh;
     std::unique_ptr<tgrShader>  _sunShader;
+    std::unique_ptr<tgrShader>  _planetShaderWithDepthMap;
     std::unique_ptr<tgrShader>  _planetShader;
     std::unique_ptr<tgrShader>  _orbitShader;
-    std::unique_ptr<tgrTexture> _texture;
-    std::unique_ptr<tgrTexture> _normalMap;
+    std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
+    std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
 
     tgrCamera _camera;
 
