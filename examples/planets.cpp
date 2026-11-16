@@ -41,8 +41,8 @@ constexpr float far_plane            = 100.0f;     // far clipping plane
 struct Settings
 {
     float speed        = 3600.0f * 24.0f; // 1 s == 1 earth day
-    float sunScale     = 100.0f;
-    float planetsScale = 500.0f;
+    float sunScale     = 30.0f;
+    float planetsScale = 250.0f;
 };
 
 // -----------------------------------------------------------------------------
@@ -425,7 +425,7 @@ void PlanetExplorer::Update()
     ImGui::Separator();
 
     ImGui::Text( "Scale Factor" );
-    ImGui::SliderFloat( "Sun", &settings.sunScale, 1.0f, 150.0f );
+    ImGui::SliderFloat( "Sun", &settings.sunScale, 1.0f, 75.0f );
     ImGui::SliderFloat( "Planets", &settings.planetsScale, 1.0f, 1000.0f );
 
     ImGui::Separator();
@@ -483,7 +483,7 @@ void PlanetExplorer::Render()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::CreateSphereMesh()
+void PlanetExplorer::CreateSphereMesh( float radius )
 {
     if ( _sphereGLMesh )
     {
@@ -494,7 +494,6 @@ void PlanetExplorer::CreateSphereMesh()
     // Create a sphere mesh
     // vertices
     std::vector<float> vertices;
-    const float        radius                = 0.5f;
     const size_t       numHorizontalSegments = 64;
     const size_t       numVerticalSegments   = numHorizontalSegments * 2;
     for ( size_t ii = 0; ii < numHorizontalSegments; ++ii )
@@ -895,7 +894,7 @@ std::unique_ptr<tgrMeshGL> &PlanetExplorer::GetGLMesh( CelestialBody body,
     {
         if ( createIfNull && !_sphereGLMesh )
         {
-            CreateSphereMesh();
+            CreateSphereMesh( 1.0f );
         }
 
         return _sphereGLMesh;

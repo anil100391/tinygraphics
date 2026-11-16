@@ -128,7 +128,7 @@ private:
     void BindEllipseGeometry( bool bind );
     void ShowPlanetInfo();
 
-    void CreateSphereMesh();
+    void CreateSphereMesh( float radius );
     void CreateRingsMesh( float innerRadius, float outerRadius );
     void CreateEllipseMesh( float a, float b, size_t numSegments );
 
