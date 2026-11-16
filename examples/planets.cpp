@@ -14,6 +14,11 @@
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+extern unsigned char JetBrainsMonoNLNerdFontMono_Thin[];
+extern unsigned int  JetBrainsMonoNLNerdFontMono_Thin_size;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 static std::filesystem::path exeDir;
 
 // -----------------------------------------------------------------------------
@@ -33,6 +38,19 @@ constexpr float far_plane            = 100.0f;     // far clipping plane
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+struct Settings
+{
+    float speed        = 3600.0f * 24.0f; // 1 s == 1 earth day
+    float sunScale     = 100.0f;
+    float planetsScale = 500.0f;
+};
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+Settings settings;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
 {
     if ( s_database.empty() )
@@ -44,8 +62,9 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
 
     if ( normalized )
     {
-        float rfac = body == CelestialBody::Sun ? 0.01f : 0.002f;
-        info.radius /= ( rfac * largestSolarDistance );
+        float scale = body == CelestialBody::Sun ? settings.sunScale
+                                                 : settings.planetsScale;
+        info.radius = info.radius * scale / largestSolarDistance;
         info.solarDistance /= largestSolarDistance;
     }
 
@@ -164,8 +183,19 @@ void PlanetsDB::PopulateDB()
 class PlanetExplorer::Simulator
 {
 public:
+
     Simulator();
     ~Simulator() = default;
+
+    void SetSpeedFactor( float speedFactor )
+    {
+        _speedFac = speedFactor;
+    }
+
+    float GetSpeedFactor() const
+    {
+        return _speedFac;
+    }
 
     void Update( float time );
 
@@ -182,8 +212,8 @@ public:
 
 private:
 
-
-    float _time = 0.0f;
+    float             _speedFac = 1.0f;
+    float             _time     = 0.0f;
     std::vector<Data> _data;
 };
 
@@ -198,7 +228,7 @@ PlanetExplorer::Simulator::Simulator()
 // -----------------------------------------------------------------------------
 void PlanetExplorer::Simulator::Update( float time )
 {
-    _time = time;
+    _time = _speedFac * time;
 
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
@@ -229,6 +259,17 @@ void PlanetExplorer::Simulator::Update( float time )
 PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     : tgrApplication( wprops, true )
 {
+    ImFontConfig fontConfig{};
+    fontConfig.FontDataOwnedByAtlas = false;
+
+    ImFont *font = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+        JetBrainsMonoNLNerdFontMono_Thin,
+        JetBrainsMonoNLNerdFontMono_Thin_size,
+        24.0f,
+        &fontConfig );
+
+    ImGui::GetIO().FontDefault = font;
+
     _camera.SetPosition( glm::vec3( -0.0014663, 0.0356589, 0.00140489 ) );
     _camera.SetPosition( glm::vec3( 0.0f, 0.0f, 0.0140489 ) );
     _camera.SetUpVec( glm::vec3( -0.151733, -0.0486303, 0.987225 ) );
@@ -257,9 +298,10 @@ void PlanetExplorer::Update()
         _simulator = new Simulator;
     }
 
+    _simulator->SetSpeedFactor( settings.speed );
     if ( _running )
     {
-        _simulator->Update( 3600.0f * 24.0f * GetCurrentTime() );
+        _simulator->Update( GetCurrentTime() );
     }
 
     // update camera
@@ -271,7 +313,6 @@ void PlanetExplorer::Update()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    // ImGui::ShowDemoWindow();
     
     const char *bodyNames[NumBodies] = { "Sun",
                                          "Mercury",
@@ -286,17 +327,39 @@ void PlanetExplorer::Update()
                                          "Pluto" };
 
     ImGui::Begin( "Explore" );
-    ImGui::ListBox( "##Celestial Body",
-                    reinterpret_cast<int *>( &_selectedBody ),
-                    bodyNames,
-                    NumBodies );
-    ImGui::End();
+    if ( ImGui::BeginListBox(
+             "##bodies",
+             ImVec2( -FLT_MIN, (NumBodies + 0.1) * ImGui::GetTextLineHeightWithSpacing() ) ) )
+    {
+        for ( int n = 0; n < IM_COUNTOF( bodyNames ); n++ )
+        {
+            bool                 isSelected = ( _selectedBody == n );
+            ImGuiSelectableFlags flags       = 0;
+            if ( ImGui::Selectable( bodyNames[n], isSelected, flags ) )
+                _selectedBody = n;
 
-    // ImGui::Begin( "Performance" );
-    // ImGuiIO &io = ImGui::GetIO();
-    // ImGui::Text( "FPS: %.1f", io.Framerate );
-    // ImGui::Text( "Frame time: %.3f ms", 1000.0f / io.Framerate );
-    // ImGui::End();
+            // Set the initial focus when opening the combo (scrolling +
+            // keyboard navigation focus)
+            if ( isSelected )
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndListBox();
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text( "Scale Factor" );
+    ImGui::SliderFloat( "Sun", &settings.sunScale, 1.0f, 150.0f );
+    ImGui::SliderFloat( "Planets", &settings.planetsScale, 1.0f, 1000.0f );
+
+    ImGui::Separator();
+
+    ImGui::Text( "Simulation Speed" );
+    static int speed = 3600 * 24;
+    ImGui::SliderInt( "Speed", &speed, 1, 3600 * 24 * 10 );
+    settings.speed = speed;
+
+    ImGui::End();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
