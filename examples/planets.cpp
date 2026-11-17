@@ -331,8 +331,15 @@ PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
 
     _camera.SetPosition( glm::vec3( -0.0014663, 0.0356589, 0.00140489 ) );
     _camera.SetPosition( glm::vec3( 0.0f, 0.0f, 0.0140489 ) );
+
     _camera.SetUpVec( glm::vec3( -0.151733, -0.0486303, 0.987225 ) );
     _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+    // for better sizes of celestial bodies, set the field of view to 30
+    // degrees larger fov (like default of 90 degrees) fits more of the solar
+    // system in view, but makes the celestial bodies appear smaller
+    _camera.SetFieldOfView( glm::radians( 30.0f ) );
+
     _camera.SetType( tgrCamera::PROJECTION::PERSPECTIVE );
 }
 

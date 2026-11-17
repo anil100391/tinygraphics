@@ -64,6 +64,16 @@ public:
         _viewDirty = true;
     }
 
+    [[nodiscard]] float GetFieldOfView() const noexcept
+    {
+        return _fov;
+    }
+
+    void SetFieldOfView( float fov ) noexcept
+    {
+        _fov = fov;
+    }
+
     [[nodiscard]] const glm::vec3 &GetUpVec() const noexcept
     {
         return _upVec;
