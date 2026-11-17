@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include <camera.h>
 #include <events/event.h>
 #include <events/keyevent.h>
@@ -25,42 +23,42 @@ void tgrCamera::OnEvent( tgrEvent &evt )
     {
         auto &mouseEvt = static_cast<tgrMouseMoveEvent &>( evt );
         dragging       = buttonPressed;
-        if ( dragging )
+        if ( !dragging )
+            break;
+
+        // keep the camera looking at look at and rotate it
+        // 1. about upvec for x delta and
+        float     dist = glm::length( GetPosition() - GetLookAt() );
+        glm::vec3 cameraDirection =
+            glm::normalize( GetPosition() - GetLookAt() );
+        glm::vec3 cameraRight =
+            glm::normalize( glm::cross( GetUpVec(), cameraDirection ) );
+        glm::vec3 cameraUp = glm::cross( cameraDirection, cameraRight );
+        SetUpVec( cameraUp );
+
+        int    xPixelMove = mouseEvt.X() - prevDragX;
+        double dthetaX    = -1.0 * xPixelMove * ( 1.0 / 5.0 ) *
+                            ( M_PI / 180.0 ); // 1 deg rotation per 5 pixel move
+        int    yPixelMove = mouseEvt.Y() - prevDragY;
+        double dthetaY    = -1.0 * yPixelMove * ( 1.0 / 5.0 ) *
+                            ( M_PI / 180.0 ); // 1 deg rotation per 5 pixel move
+
+        glm::mat4 identity( 1.0f );
+        glm::mat4 r =
+            glm::rotate( identity, static_cast<float>( dthetaX ), cameraUp );
+        r = glm::rotate( r, static_cast<float>( dthetaY ), cameraRight );
+        if ( _controllerMode == CONTROLLER_MODE::TRACK )
         {
-            // keep the camera centerd at look at and rotate it
-            // 1. about upvec for x delta and
-            const glm::vec3 &cor = GetLookAt();
-            const glm::vec3 &pos = GetPosition();
-
-            float     dist = glm::length( GetPosition() - GetLookAt() );
-            glm::vec3 cameraDirection =
-                glm::normalize( GetPosition() - GetLookAt() );
-            glm::vec3 cameraRight =
-                glm::normalize( glm::cross( GetUpVec(), cameraDirection ) );
-            glm::vec3 cameraUp = glm::cross( cameraDirection, cameraRight );
-            SetUpVec( cameraUp );
-
-            int    xPixelMove = mouseEvt.X() - prevDragX;
-            double dthetaX =
-                -1.0 * xPixelMove * ( 1.0 / 5.0 ) *
-                ( M_PI / 180.0 ); // 1 deg rotation per 5 pixel move
-            int    yPixelMove = mouseEvt.Y() - prevDragY;
-            double dthetaY =
-                -1.0 * yPixelMove * ( 1.0 / 5.0 ) *
-                ( M_PI / 180.0 ); // 1 deg rotation per 5 pixel move
-
-            glm::mat4 identity( 1.0f );
-            glm::mat4 r = glm::rotate(
-                identity, static_cast<float>( dthetaX ), cameraUp );
-            r = glm::rotate( r, static_cast<float>( dthetaY ), cameraRight );
             glm::vec4 newDir = r * glm::vec4( cameraDirection, 1.0f );
-
-            SetPosition( cor +
-                         dist * glm::vec3( newDir[0], newDir[1], newDir[2] ) );
-
-            prevDragX = mouseEvt.X();
-            prevDragY = mouseEvt.Y();
+            SetPosition( GetLookAt() + dist * glm::vec3( newDir ) );
         }
+        else if ( _controllerMode == CONTROLLER_MODE::POV )
+        {
+            glm::vec4 newDir = r * glm::vec4( -cameraDirection, 1.0f );
+            SetLookAt( GetPosition() + dist * glm::vec3( newDir ) );
+        }
+        prevDragX = mouseEvt.X();
+        prevDragY = mouseEvt.Y();
         break;
     }
     case tgrEventType::MouseButtonPressed:

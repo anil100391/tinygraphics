@@ -77,7 +77,6 @@ constexpr int NumBodies = ToIndex( CelestialBody::Count );
 class PlanetsDB
 {
 public:
-
     struct Info
     {
         std::string name;
@@ -94,7 +93,6 @@ public:
     static Info GetInfo( CelestialBody body, bool normalized = false );
 
 private:
-
     static void PopulateDB();
 
     static std::vector<Info> s_database;
@@ -112,15 +110,15 @@ public:
     virtual bool OnEvent( tgrEvent &evt ) override;
 
 private:
-
     void Render();
 
     void CreateShader();
 
-    std::unique_ptr<tgrShader>& UpdateCelestialBodyShader( CelestialBody body );
-    std::unique_ptr<tgrShader>& UpdateOrbitShader( CelestialBody body );
+    std::unique_ptr<tgrShader> &UpdateCelestialBodyShader( CelestialBody body );
+    std::unique_ptr<tgrShader> &UpdateOrbitShader( CelestialBody body );
 
-    std::unique_ptr<tgrMeshGL> &GetGLMesh( CelestialBody body, bool createIfNull );
+    std::unique_ptr<tgrMeshGL> &GetGLMesh( CelestialBody body,
+                                           bool          createIfNull );
     std::unique_ptr<tgrShader> &GetShader( CelestialBody body );
 
     void DrawCelestialBodies();
@@ -132,21 +130,23 @@ private:
     void CreateRingsMesh( float innerRadius, float outerRadius );
     void CreateEllipseMesh( float a, float b, size_t numSegments );
 
-    std::unique_ptr<tgrMeshGL>  _sphereGLMesh;
-    std::unique_ptr<tgrMeshGL>  _ringsGLMesh;
-    std::unique_ptr<tgrMeshGL>  _ellipseGLMesh;
-    std::unique_ptr<tgrShader>  _sunShader;
-    std::unique_ptr<tgrShader>  _planetShaderWithDepthMap;
-    std::unique_ptr<tgrShader>  _planetShader;
-    std::unique_ptr<tgrShader>  _orbitShader;
+    void PlaceCameraOnPlanet( CelestialBody body );
+
+    std::unique_ptr<tgrMeshGL> _sphereGLMesh;
+    std::unique_ptr<tgrMeshGL> _ringsGLMesh;
+    std::unique_ptr<tgrMeshGL> _ellipseGLMesh;
+    std::unique_ptr<tgrShader> _sunShader;
+    std::unique_ptr<tgrShader> _planetShaderWithDepthMap;
+    std::unique_ptr<tgrShader> _planetShader;
+    std::unique_ptr<tgrShader> _orbitShader;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
 
     tgrCamera _camera;
 
     int   _selectedBody = 0;
-    float _rotation = 0.0f;
-    bool  _running  = true;
+    float _rotation     = 0.0f;
+    bool  _running      = true;
 
     class Simulator;
     Simulator *_simulator = nullptr;

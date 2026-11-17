@@ -20,6 +20,22 @@ public:
     tgrCamera()  = default;
     ~tgrCamera() = default;
 
+    enum class CONTROLLER_MODE
+    {
+        TRACK, // track object at GetLookAt
+        POV    // point of view from GetPosition
+    };
+
+    [[nodiscard]] CONTROLLER_MODE GetControllerMode() const noexcept
+    {
+        return _controllerMode;
+    }
+
+    void SetControllerMode( CONTROLLER_MODE mode ) noexcept
+    {
+        _controllerMode = mode;
+    }
+
     enum class PROJECTION
     {
         ORTHOGRAPHIC,
@@ -125,7 +141,8 @@ private:
     glm::mat4 _viewMatrix;
     bool      _viewDirty = true;
 
-    PROJECTION _projType = PROJECTION::PERSPECTIVE;
+    PROJECTION      _projType       = PROJECTION::PERSPECTIVE;
+    CONTROLLER_MODE _controllerMode = CONTROLLER_MODE::TRACK;
 };
 
 #endif // _camera_h_

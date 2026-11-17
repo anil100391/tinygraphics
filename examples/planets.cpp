@@ -183,7 +183,6 @@ void PlanetsDB::PopulateDB()
 class PlanetExplorer::Simulator
 {
 public:
-
     Simulator();
     ~Simulator() = default;
 
@@ -211,7 +210,6 @@ public:
     }
 
 private:
-
     float             _speedFac = 1.0f;
     float             _time     = 0.0f;
     std::vector<Data> _data;
@@ -265,9 +263,8 @@ public:
 
     ~CameraAnimator() = default;
 
-    void StartAnimation( const glm::vec3 &targetLookAt,
-                         float            startTime,
-                         float            duration )
+    void
+    PointTo( const glm::vec3 &targetLookAt, float startTime, float duration )
     {
         _startLookAt  = _camera.GetLookAt();
         _targetLookAt = targetLookAt;
@@ -280,6 +277,17 @@ public:
         _targetPos =
             _targetLookAt + glm::normalize( _startPos - _targetLookAt ) *
                                 intialDistanceFromTarget;
+    }
+
+    void
+    LookFrom( const glm::vec3 &targetPosition, float startTime, float duration )
+    {
+        _startPos     = _camera.GetPosition();
+        _targetPos    = targetPosition;
+        _startLookAt  = _camera.GetLookAt();
+        _targetLookAt = _camera.GetLookAt();
+        _startTime    = startTime;
+        _duration     = duration;
     }
 
     bool Update( float currentTime )
@@ -365,17 +373,26 @@ void PlanetExplorer::Update()
         _simulator = new Simulator;
     }
 
+    static float time_offset = 0.0f;
     _simulator->SetSpeedFactor( settings.speed );
     if ( _running )
     {
-        _simulator->Update( GetCurrentTime() );
+        _simulator->Update( GetCurrentTime() + time_offset );
     }
 
     // update camera
     if ( !_cameraAnimator || !_cameraAnimator->Update( GetCurrentTime() ) )
     {
         const auto &info = _simulator->GetData( ToBody( _selectedBody ) );
-        _camera.SetLookAt( info.location / largestSolarDistance );
+        if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::TRACK )
+        {
+            _camera.SetLookAt( info.location / largestSolarDistance );
+        }
+        else if ( _camera.GetControllerMode() ==
+                  tgrCamera::CONTROLLER_MODE::POV )
+        {
+            PlaceCameraOnPlanet( ToBody( _selectedBody ) );
+        }
     }
 
     Render();
@@ -383,7 +400,15 @@ void PlanetExplorer::Update()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    
+
+    ImGui::Begin( "Explore" );
+    static int  current_track_mode = 0;
+    const char *cameraModes[]      = { "Track", "Point of View" };
+    ImGui::Combo(
+        "Camera", &current_track_mode, cameraModes, IM_COUNTOF( cameraModes ) );
+    _camera.SetControllerMode(
+        static_cast<tgrCamera::CONTROLLER_MODE>( current_track_mode ) );
+
     const char *bodyNames[NumBodies] = { "Sun",
                                          "Mercury",
                                          "Venus",
@@ -396,27 +421,40 @@ void PlanetExplorer::Update()
                                          "Neptune",
                                          "Pluto" };
 
-    ImGui::Begin( "Explore" );
     if ( ImGui::BeginListBox(
              "##bodies",
-             ImVec2( -FLT_MIN, (NumBodies + 0.1) * ImGui::GetTextLineHeightWithSpacing() ) ) )
+             ImVec2( -FLT_MIN,
+                     ( NumBodies + 0.1 ) *
+                         ImGui::GetTextLineHeightWithSpacing() ) ) )
     {
         for ( int n = 0; n < IM_COUNTOF( bodyNames ); n++ )
         {
             bool                 isSelected = ( _selectedBody == n );
-            ImGuiSelectableFlags flags       = 0;
+            ImGuiSelectableFlags flags      = 0;
             if ( ImGui::Selectable( bodyNames[n], isSelected, flags ) )
             {
-                if (!_cameraAnimator)
+                if ( !_cameraAnimator )
                 {
                     _cameraAnimator = new CameraAnimator( _camera );
                 }
 
                 const auto &info = _simulator->GetData( ToBody( n ) );
-                _cameraAnimator->StartAnimation( info.location /
-                                                     largestSolarDistance,
-                                                 GetCurrentTime(),
-                                                 2.0f );
+                if ( _camera.GetControllerMode() ==
+                     tgrCamera::CONTROLLER_MODE::TRACK )
+                {
+                    _cameraAnimator->PointTo( info.location /
+                                                  largestSolarDistance,
+                                              GetCurrentTime(),
+                                              2.0f );
+                }
+                else if ( _camera.GetControllerMode() ==
+                          tgrCamera::CONTROLLER_MODE::POV )
+                {
+                    _cameraAnimator->LookFrom( info.location /
+                                                   largestSolarDistance,
+                                               GetCurrentTime(),
+                                               2.0f );
+                }
 
                 _selectedBody = n;
             }
@@ -439,8 +477,10 @@ void PlanetExplorer::Update()
 
     ImGui::Text( "Simulation Speed" );
     static int speed = 3600 * 24;
-    ImGui::SliderInt( "Speed", &speed, 1, 3600 * 24 * 10 );
+    ImGui::DragInt( "Speed", &speed, 1, 3600 * 24 * 10 );
     settings.speed = speed;
+
+    ImGui::DragFloat( "Time March", &time_offset, 1, 3600 * 24 * 10 );
 
     ImGui::End();
 
@@ -460,7 +500,10 @@ bool PlanetExplorer::OnEvent( tgrEvent &evt )
         _running = !_running;
     }
 
-    _camera.OnEvent( evt );
+    if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::TRACK )
+    {
+        _camera.OnEvent( evt );
+    }
     return tgrApplication::OnEvent( evt );
 }
 
@@ -591,7 +634,7 @@ void PlanetExplorer::CreateRingsMesh( float innerRadius, float outerRadius )
     const size_t       numThetaSegments = 128;
     for ( size_t ii = 0; ii < numThetaSegments; ++ii )
     {
-        float u     = ( 1.0f * ii / ( numThetaSegments - 1 ) );
+        float u        = ( 1.0f * ii / ( numThetaSegments - 1 ) );
         float cosTheta = std::cos( u * 2 * std::numbers::pi );
         float sinTheta = std::sin( u * 2 * std::numbers::pi );
         for ( size_t jj = 0; jj < numRSegments; ++jj )
@@ -681,6 +724,41 @@ void PlanetExplorer::CreateEllipseMesh( float a, float b, size_t numSegments )
     }
 
     _ellipseGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
+{
+    const auto &simData   = _simulator->GetData( body );
+    auto        planetLoc = simData.location / largestSolarDistance;
+
+    // this will be better done using parametric coordinates on sphere
+    // Let's choose (1, 0, 0) i.e. a point on equator for now. We can generalize
+    // it later
+    const auto &info = PlanetsDB::GetInfo( body, true );
+    auto cameraPos   = info.radius * glm::vec3( std::cos( simData.rotation ),
+                                                std::sin( simData.rotation ),
+                                                0.0f );
+
+    // planet reference north pole
+    auto north = glm::vec3( 0.0f, 0.0f, 1.0f );
+    auto east  = glm::normalize( glm::cross( north, cameraPos ) );
+
+    // apply axial tilt transformation
+    cameraPos = glm::vec4( cameraPos, 1.0f ) *
+                glm::rotate( glm::mat4( .10f ),
+                             glm::radians( info.axialTilt ),
+                             glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+    east =
+        glm::vec4( east, 1.0f ) * glm::rotate( glm::mat4( .10f ),
+                                               glm::radians( info.axialTilt ),
+                                               glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+    _camera.SetPosition( planetLoc + cameraPos );
+    _camera.SetLookAt( east );
+    _camera.SetUpVec( cameraPos );
 }
 
 // -----------------------------------------------------------------------------
@@ -802,8 +880,8 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // MVP transforms
     // ------------------------------------------------------------------------
-    const auto &info           = PlanetsDB::GetInfo( body, true );
-    const auto &simData        = _simulator->GetData( body );
+    const auto &info     = PlanetsDB::GetInfo( body, true );
+    const auto &simData  = _simulator->GetData( body );
     glm::vec    location = simData.location / largestSolarDistance;
     glm::mat4   model =
         glm::translate( glm::mat4( 1.0f ), location ) * // position
@@ -813,8 +891,9 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
         glm::rotate( glm::mat4( 1.0f ),
                      simData.rotation,
                      glm::vec3( 0.0f, 0.0f, 1.0f ) ) * // axial rotation
-        glm::scale( glm::mat4( 1.0f ),
-                    glm::vec3( info.radius, info.radius, info.radius ) ); // size
+        glm::scale(
+            glm::mat4( 1.0f ),
+            glm::vec3( info.radius, info.radius, info.radius ) ); // size
 
     shaderToUse->SetUniformMat4f( "u_M", model );
     shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
@@ -915,9 +994,12 @@ std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
 {
     switch ( body )
     {
-    case CelestialBody::Sun:  return _sunShader;
-    case CelestialBody::Mars: return _planetShaderWithDepthMap;
-    default:                  return _planetShader;
+    case CelestialBody::Sun:
+        return _sunShader;
+    case CelestialBody::Mars:
+        return _planetShaderWithDepthMap;
+    default:
+        return _planetShader;
     }
 }
 
@@ -930,7 +1012,7 @@ void PlanetExplorer::DrawCelestialBodies()
     // Draw celestial bodies
     for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
-        auto  body   = ToBody( ii );
+        auto body = ToBody( ii );
 
         // Since we want to see 2d rings mesh from both sides
         if ( body == CelestialBody::SaturnRings )
