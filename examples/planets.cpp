@@ -748,12 +748,12 @@ void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
 
     // apply axial tilt transformation
     cameraPos = glm::vec4( cameraPos, 1.0f ) *
-                glm::rotate( glm::mat4( .10f ),
+                glm::rotate( glm::mat4( 1.0f ),
                              glm::radians( info.axialTilt ),
                              glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
     east =
-        glm::vec4( east, 1.0f ) * glm::rotate( glm::mat4( .10f ),
+        glm::vec4( east, 1.0f ) * glm::rotate( glm::mat4( 1.0f ),
                                                glm::radians( info.axialTilt ),
                                                glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
@@ -1067,9 +1067,18 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
         vertices[cnt++] = info.radius;
 
         // color
-        vertices[cnt++] = 0.8f;
-        vertices[cnt++] = 0.8f;
-        vertices[cnt++] = 0.0f;
+        if ( body == CelestialBody::Sun )
+        {
+            vertices[cnt++] = 0.9f;
+            vertices[cnt++] = 0.9f;
+            vertices[cnt++] = 0.0f;
+        }
+        else
+        {
+            vertices[cnt++] = 0.9f;
+            vertices[cnt++] = 0.9f;
+            vertices[cnt++] = 0.9f;
+        }
     }
 
     if ( !_bodyPointsGL )

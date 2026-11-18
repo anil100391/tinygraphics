@@ -22,7 +22,7 @@ void main()
     float projectedSize = radius * u_viewPortHeight / (distance * tan(u_fovY * 0.5));
 
     // minimum size for observational visibility
-    gl_PointSize = max(projectedSize, 2.0);
+    gl_PointSize = max(projectedSize, 4.0);
 
     vColor = color;
 }
