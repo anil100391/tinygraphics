@@ -46,6 +46,18 @@ void tgrRenderer::Clear() const
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void tgrRenderer::Draw( const tgrVertexArray &va,
+                        const tgrShader      &shader,
+                        unsigned int          count,
+                        DRAW_MODE             dm ) const
+{
+    va.Bind();
+    shader.Bind();
+    glDrawArrays( GetGLDrawMode( dm ), 0, count );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void tgrRenderer::Draw( const tgrVertexArray &va,
                         const tgrIndexBuffer &ib,
                         const tgrShader      &shader,
                         DRAW_MODE             dm ) const
@@ -74,6 +86,8 @@ GLenum tgrRenderer::GetGLDrawMode( DRAW_MODE dm ) const
         return GL_TRIANGLES;
     case DRAW_MODE::LINES:
         return GL_LINES;
+    case DRAW_MODE::POINTS:
+        return GL_POINTS;
     default:
         return GL_INVALID_ENUM;
     }

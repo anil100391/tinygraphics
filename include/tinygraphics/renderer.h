@@ -33,11 +33,17 @@ public:
 
     enum DRAW_MODE
     {
+        POINTS,
         LINES,
         TRIANGLES
     };
 
     void Clear() const;
+
+    void Draw( const tgrVertexArray &va,
+               const tgrShader      &shader,
+               unsigned int          count,
+               DRAW_MODE             dm = POINTS ) const;
 
     void Draw( const tgrVertexArray &va,
                const tgrIndexBuffer &ib,

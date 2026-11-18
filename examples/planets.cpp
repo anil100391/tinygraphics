@@ -515,6 +515,7 @@ void PlanetExplorer::Render()
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glEnable( GL_CULL_FACE );
+    glEnable( GL_PROGRAM_POINT_SIZE );
 
     // Clear screen to draw
     glClearColor( 0.0, 0.0, 0.0, 1.0 );
@@ -833,6 +834,14 @@ void main()
             std::make_unique<tgrShader>( orbitVShaderSrc, orbitFShaderSrc );
     }
 
+    std::filesystem::path pointsVertShader(
+        exeDir.string() + "/assets/shaders/points_vert.glsl" );
+    std::filesystem::path pointsFragShader(
+        exeDir.string() + "/assets/shaders/points_frag.glsl" );
+
+    _pointsShader =
+        std::make_unique<tgrShader>( pointsVertShader, pointsFragShader );
+
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
         const auto           &info = PlanetsDB::GetInfo( ToBody( ii ) );
@@ -962,6 +971,40 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+std::unique_ptr<tgrShader> &PlanetExplorer::UpdateCelestialBodiesPointShader()
+{
+    if ( !_pointsShader )
+    {
+        CreateShader();
+    }
+
+    auto &shaderToUse = _pointsShader;
+
+    shaderToUse->Bind();
+
+    // ------------------------------------------------------------------------
+    // MVP transforms
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
+
+    int width, height;
+    GetWindowSize( width, height );
+    float     aspectRatio = ( 1.0f * width ) / height;
+    glm::mat4 projection =
+        _camera.GetProjectionMatrix( aspectRatio, near_plane, far_plane );
+    shaderToUse->SetUniformMat4f( "u_P", projection );
+
+    // ------------------------------------------------------------------------
+    // camera and image
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniform1f( "u_viewPortHeight", height );
+    shaderToUse->SetUniform1f( "u_fovY", _camera.GetFieldOfView() );
+
+    return shaderToUse;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 std::unique_ptr<tgrMeshGL> &PlanetExplorer::GetGLMesh( CelestialBody body,
                                                        bool createIfNull )
 {
@@ -990,6 +1033,71 @@ std::unique_ptr<tgrMeshGL> &PlanetExplorer::GetGLMesh( CelestialBody body,
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
+{
+    // Create a list of points for each celestial body that could be drawn as
+    // point
+    std::array<CelestialBody, 10u> bodies = { CelestialBody::Sun,
+                                              CelestialBody::Mercury,
+                                              CelestialBody::Venus,
+                                              CelestialBody::Earth,
+                                              CelestialBody::Mars,
+                                              CelestialBody::Jupiter,
+                                              CelestialBody::Saturn,
+                                              CelestialBody::Uranus,
+                                              CelestialBody::Neptune,
+                                              CelestialBody::Pluto };
+
+    static std::vector<float> vertices;
+    vertices.resize( ( 3 + 1 + 3 ) * bodies.size() );
+
+    int cnt = 0;
+    for ( const auto &body : bodies )
+    {
+        const auto &info    = PlanetsDB::GetInfo( body, true );
+        const auto &simData = _simulator->GetData( body );
+
+        // position
+        auto location   = simData.location / largestSolarDistance;
+        vertices[cnt++] = location.x;
+        vertices[cnt++] = location.y;
+        vertices[cnt++] = location.z;
+
+        // radius
+        vertices[cnt++] = info.radius;
+
+        // color
+        vertices[cnt++] = 0.8f;
+        vertices[cnt++] = 0.8f;
+        vertices[cnt++] = 0.0f;
+    }
+
+    if ( !_bodyPointsGL )
+    {
+        tgrVertexBufferLayout layout;
+        layout.Push<float>( 3 ); // position
+        layout.Push<float>( 1 ); // radisu
+        layout.Push<float>( 3 ); // color
+
+        std::vector<unsigned int> conn;
+        _bodyPointsGL = std::make_unique<tgrMeshGL>(
+            vertices, layout, conn, GL_DYNAMIC_DRAW );
+    }
+    else
+    {
+        _bodyPointsGL->Vbo()->Bind();
+        _bodyPointsGL->Vbo()->BufferData(
+            vertices.data(),
+            static_cast<unsigned int>( vertices.size() * sizeof( float ) ),
+            GL_DYNAMIC_DRAW );
+    }
+
+    return std::make_pair( _bodyPointsGL.get(),
+                           static_cast<unsigned int>( bodies.size() ) );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
 {
     switch ( body )
@@ -1009,7 +1117,17 @@ void PlanetExplorer::DrawCelestialBodies()
 {
     CreateShader();
 
-    // Draw celestial bodies
+    // -------------------------------------------------------------------------
+    // Draw celestial bodies. Draw point representation first and for planets
+    // that are big enough we can skip drawing them as mesh
+    // -------------------------------------------------------------------------
+    auto [pointsMeshGL, numPoints] = GetGLPointsMesh();
+    BindGLMesh( pointsMeshGL, true );
+    auto &pointsShader = UpdateCelestialBodiesPointShader();
+    r.Draw(
+        *pointsMeshGL->Vao(), *pointsShader, numPoints, tgrRenderer::POINTS );
+    BindGLMesh( pointsMeshGL, false );
+
     for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
         auto body = ToBody( ii );
@@ -1021,12 +1139,12 @@ void PlanetExplorer::DrawCelestialBodies()
         }
 
         auto &meshGL = GetGLMesh( body, true );
-        BindGLMesh( meshGL, true );
+        BindGLMesh( meshGL.get(), true );
         auto &shader = UpdateCelestialBodyShader( body );
 
         r.Draw( *meshGL->Vao(), *meshGL->Ibo(), *shader );
 
-        BindGLMesh( meshGL, false );
+        BindGLMesh( meshGL.get(), false );
 
         if ( body == CelestialBody::SaturnRings )
         {
@@ -1051,7 +1169,7 @@ void PlanetExplorer::DrawCelestialBodies()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::BindGLMesh( std::unique_ptr<tgrMeshGL> &meshGL, bool bind )
+void PlanetExplorer::BindGLMesh( tgrMeshGL *meshGL, bool bind )
 {
     if ( meshGL )
     {
@@ -1059,13 +1177,20 @@ void PlanetExplorer::BindGLMesh( std::unique_ptr<tgrMeshGL> &meshGL, bool bind )
         {
             meshGL->Vbo()->Bind();
             meshGL->Vao()->Bind();
-            meshGL->Ibo()->Bind();
+            if ( meshGL->Ibo() )
+            {
+                meshGL->Ibo()->Bind();
+            }
         }
-        else if ( meshGL )
+        else
         {
             meshGL->Vbo()->Unbind();
             meshGL->Vao()->Unbind();
             meshGL->Ibo()->Unbind();
+            if ( meshGL->Ibo() )
+            {
+                meshGL->Ibo()->Bind();
+            }
         }
     }
 }

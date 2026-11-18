@@ -25,6 +25,9 @@ void tgrMeshGL::PopulateBuffers( const std::vector<float>        &vertices,
 
     _vao->AddBuffer( *_vbo, layout );
 
-    _ibo = std::make_unique<tgrIndexBuffer>(
-        conn.data(), static_cast<unsigned int>( conn.size() ) );
+    if ( !conn.empty() )
+    {
+        _ibo = std::make_unique<tgrIndexBuffer>(
+            conn.data(), static_cast<unsigned int>( conn.size() ) );
+    }
 }

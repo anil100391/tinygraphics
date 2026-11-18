@@ -116,13 +116,15 @@ private:
 
     std::unique_ptr<tgrShader> &UpdateCelestialBodyShader( CelestialBody body );
     std::unique_ptr<tgrShader> &UpdateOrbitShader( CelestialBody body );
+    std::unique_ptr<tgrShader> &UpdateCelestialBodiesPointShader();
 
-    std::unique_ptr<tgrMeshGL> &GetGLMesh( CelestialBody body,
-                                           bool          createIfNull );
-    std::unique_ptr<tgrShader> &GetShader( CelestialBody body );
+    std::unique_ptr<tgrMeshGL>          &GetGLMesh( CelestialBody body,
+                                                    bool          createIfNull );
+    std::pair<tgrMeshGL *, unsigned int> GetGLPointsMesh();
+    std::unique_ptr<tgrShader>          &GetShader( CelestialBody body );
 
     void DrawCelestialBodies();
-    void BindGLMesh( std::unique_ptr<tgrMeshGL> &meshGL, bool bind );
+    void BindGLMesh( tgrMeshGL *meshGL, bool bind );
     void BindEllipseGeometry( bool bind );
     void ShowPlanetInfo();
 
@@ -139,6 +141,10 @@ private:
     std::unique_ptr<tgrShader> _planetShaderWithDepthMap;
     std::unique_ptr<tgrShader> _planetShader;
     std::unique_ptr<tgrShader> _orbitShader;
+    std::unique_ptr<tgrShader> _pointsShader;
+
+    // for point drawing of bodies if they are smaller than a few pixel
+    std::unique_ptr<tgrMeshGL>                         _bodyPointsGL;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
 
