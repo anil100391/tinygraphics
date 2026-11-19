@@ -43,6 +43,9 @@ struct Settings
     float speed        = 3600.0f * 24.0f; // 1 s == 1 earth day
     float sunScale     = 30.0f;
     float planetsScale = 250.0f;
+
+    glm::vec3 orbitColor{ 0.2f, 0.2f, 0.2f };
+    glm::vec3 backgroundColor{ 0.0f, 0.0f, 0.0f };
 };
 
 // -----------------------------------------------------------------------------
@@ -482,6 +485,11 @@ void PlanetExplorer::Update()
 
     ImGui::DragFloat( "Time March", &time_offset, 1, 3600 * 24 * 10 );
 
+    ImGui::Separator();
+    ImGui::Text( "Style" );
+    ImGui::ColorEdit3( "Orbit", &settings.orbitColor.x );
+    ImGui::ColorEdit3( "Background", &settings.backgroundColor.x );
+
     ImGui::End();
 
     ImGui::Render();
@@ -518,7 +526,10 @@ void PlanetExplorer::Render()
     glEnable( GL_PROGRAM_POINT_SIZE );
 
     // Clear screen to draw
-    glClearColor( 0.0, 0.0, 0.0, 1.0 );
+    glClearColor( settings.backgroundColor.x,
+                  settings.backgroundColor.y,
+                  settings.backgroundColor.z,
+                  1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     DrawCelestialBodies();
@@ -825,9 +836,10 @@ void main()
 #version 330 core
 in vec3 fragPos;
 in vec2 fragTexCoord;
+uniform vec3 u_Color;
 void main()
 {
-    gl_FragColor = vec4(0.3, 0.3, 0.3, 0.5);
+    gl_FragColor = vec4(u_Color, 1.0);
 })";
 
         _orbitShader =
@@ -966,6 +978,7 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
     glm::mat4 projection =
         _camera.GetProjectionMatrix( aspectRatio, near_plane, far_plane );
     shaderToUse->SetUniformMat4f( "u_P", projection );
+    shaderToUse->SetUniform3f( "u_Color", settings.orbitColor );
     return shaderToUse;
 }
 
