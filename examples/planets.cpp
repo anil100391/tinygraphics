@@ -33,7 +33,7 @@ std::vector<PlanetsDB::Info> PlanetsDB::s_database;
 // -----------------------------------------------------------------------------
 constexpr float largestSolarDistance = 5.9064e12f; // Pluto
 constexpr float largestRadius        = 6.9634e8f;  // Sun
-constexpr float near_plane           = 0.005f;     // near clipping plane
+constexpr float near_plane           = 0.000005f;  // near clipping plane
 constexpr float far_plane            = 100.0f;     // far clipping plane
 
 // -----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
         float scale = body == CelestialBody::Sun ? settings.sunScale
                                                  : settings.planetsScale;
         info.radius = info.radius * scale / largestSolarDistance;
-        info.solarDistance /= largestSolarDistance;
+        info.parentDistance /= largestSolarDistance;
     }
 
     return info;
@@ -78,107 +78,185 @@ PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
 // -----------------------------------------------------------------------------
 void PlanetsDB::PopulateDB()
 {
-    s_database = { { "Sun",
-                     "Star",
-                     6.9634e8f,
-                     1.9891e30f,
-                     0.0f,
-                     0.0f,
-                     25.0f,
-                     0.0f,
-                     274.0f },
-                   { "Mercury",
-                     "Planet",
-                     2.4394e6f,
-                     3.30103e23f,
-                     5.7909e10f,
-                     87.969f,
-                     1407.6f,
-                     0.034f,
-                     3.70f },
-                   { "Venus",
-                     "Planet",
-                     6.0518e6f,
-                     4.86731e24f,
-                     1.0821e11f,
-                     224.701f,
-                     5832.5f,
-                     177.4f,
-                     8.87f },
-                   { "Earth",
-                     "Planet",
-                     6.3710e6f,
-                     5.9722e24f,
-                     1.4960e11f,
-                     365.256f,
-                     23.934f,
-                     23.44f,
-                     9.81f },
-                   { "Mars",
-                     "Planet",
-                     3.3895e6f,
-                     6.4171e23f,
-                     2.2794e11f,
-                     686.980f,
-                     24.623f,
-                     25.19f,
-                     3.71f },
-                   { "Jupiter",
-                     "Planet",
-                     6.9911e7f,
-                     1.89813e27f,
-                     7.7857e11f,
-                     4332.59f,
-                     9.925f,
-                     3.13f,
-                     23.12f },
-                   { "Saturn",
-                     "Planet",
-                     5.8232e7f,
-                     5.6834e26f,
-                     1.4335e12f,
-                     10759.2f,
-                     10.656f,
-                     26.73f,
-                     8.96f },
-                   { "Saturn Rings",
-                     "Planet Ring",
-                     1.4022e8f,
-                     0.0f,
-                     1.4335e12f,
-                     10759.2f,
-                     10.656f,
-                     26.73f,
-                     8.96f },
-                   { "Uranus",
-                     "Planet",
-                     2.5362e7f,
-                     8.6810e25f,
-                     2.8725e12f,
-                     30688.5f,
-                     17.24f,
-                     97.77f,
-                     8.69f },
-                   { "Neptune",
-                     "Planet",
-                     2.4622e7f,
-                     1.02409e26f,
-                     4.4951e12f,
-                     60182.0f,
-                     16.11f,
-                     28.32f,
-                     11.15f },
-                   { "Pluto",
-                     "Dwarf Planet",
-                     1.1883e6f,
-                     1.303e22f,
-                     5.9064e12f,
-                     90530.0f,
-                     15.15f,
-                     122.54f,
-                     0.66f } };
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Sun";
+        info.type           = "Star";
+        info.radius         = 6.9634e+08;
+        info.mass           = 1.9891e+30;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 0;
+        info.daysInAYear    = 0;
+        info.hoursInADay    = 25;
+        info.axialTilt      = 0;
+        info.surfaceGravity = 274;
+    }
 
-    s_database.resize( NumBodies );
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Mercury";
+        info.type           = "Planet";
+        info.radius         = 2.4394e+06;
+        info.mass           = 3.30103e+23;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 5.7909e+10;
+        info.daysInAYear    = 87.969;
+        info.hoursInADay    = 1407.6;
+        info.axialTilt      = 0.034;
+        info.surfaceGravity = 3.7;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Venus";
+        info.type           = "Planet";
+        info.radius         = 6.0518e+06;
+        info.mass           = 4.86731e+24;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 1.0821e+11;
+        info.daysInAYear    = 224.701;
+        info.hoursInADay    = 5832.5;
+        info.axialTilt      = 177.4;
+        info.surfaceGravity = 8.87;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Earth";
+        info.type           = "Planet";
+        info.radius         = 6.371e+06;
+        info.mass           = 5.9722e+24;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 1.496e+11;
+        info.daysInAYear    = 365.256;
+        info.hoursInADay    = 23.934;
+        info.axialTilt      = 0.0f;
+        info.surfaceGravity = 9.81;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Moon";
+        info.type           = "Natural Satellite";
+        info.radius         = 1.738e6;
+        info.mass           = 7.34767309e22;
+        info.parent         = CelestialBody::Earth;
+        info.parentDistance = 3.844e8;
+        info.daysInAYear    = 27.32;
+        info.hoursInADay    = 27.32 * 24;
+        info.axialTilt      = 1.53;
+        info.surfaceGravity = 1.625;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Mars";
+        info.type           = "Planet";
+        info.radius         = 3.3895e+06;
+        info.mass           = 6.4171e+23;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 2.2794e+11;
+        info.daysInAYear    = 686.98;
+        info.hoursInADay    = 24.623;
+        info.axialTilt      = 25.19;
+        info.surfaceGravity = 3.71;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Jupiter";
+        info.type           = "Planet";
+        info.radius         = 6.9911e+07;
+        info.mass           = 1.89813e+27;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 7.7857e+11;
+        info.daysInAYear    = 4332.59;
+        info.hoursInADay    = 9.925;
+        info.axialTilt      = 3.13;
+        info.surfaceGravity = 23.12;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Saturn";
+        info.type           = "Planet";
+        info.radius         = 5.8232e+07;
+        info.mass           = 5.6834e+26;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 1.4335e+12;
+        info.daysInAYear    = 10759.2;
+        info.hoursInADay    = 10.656;
+        info.axialTilt      = 26.73;
+        info.surfaceGravity = 8.96;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Saturn Rings";
+        info.type           = "Planet Ring";
+        info.radius         = 1.4022e+08;
+        info.mass           = 0;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 1.4335e+12;
+        info.daysInAYear    = 10759.2;
+        info.hoursInADay    = 10.656;
+        info.axialTilt      = 26.73;
+        info.surfaceGravity = 8.96;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Uranus";
+        info.type           = "Planet";
+        info.radius         = 2.5362e+07;
+        info.mass           = 8.681e+25;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 2.8725e+12;
+        info.daysInAYear    = 30688.5;
+        info.hoursInADay    = 17.24;
+        info.axialTilt      = 97.77;
+        info.surfaceGravity = 8.69;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Neptune";
+        info.type           = "Planet";
+        info.radius         = 2.4622e+07;
+        info.mass           = 1.02409e+26;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 4.4951e+12;
+        info.daysInAYear    = 60182;
+        info.hoursInADay    = 16.11;
+        info.axialTilt      = 28.32;
+        info.surfaceGravity = 11.15;
+    }
+
+    s_database.emplace_back();
+    {
+        auto &info          = s_database.back();
+        info.name           = "Pluto";
+        info.type           = "Dwarf Planet";
+        info.radius         = 1.1883e+06;
+        info.mass           = 1.303e+22;
+        info.parent         = CelestialBody::Sun;
+        info.parentDistance = 5.9064e+12;
+        info.daysInAYear    = 90530;
+        info.hoursInADay    = 15.15;
+        info.axialTilt      = 122.54;
+        info.surfaceGravity = 0.66;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -237,15 +315,21 @@ void PlanetExplorer::Simulator::Update( float time )
         const auto &info = PlanetsDB::GetInfo( body, false );
 
         // body position
-        float angularVelAroundSun =
+        float angularVelAroundParent =
             ( body == CelestialBody::Sun )
                 ? 0.0f
                 : 2.0f * std::numbers::pi /
                       ( info.daysInAYear * 24.0f * 3600.0f );
-        float theta        = _time * angularVelAroundSun;
-        _data[ii].location = glm::vec3( info.solarDistance * std::cos( theta ),
-                                        info.solarDistance * std::sin( theta ),
+        float theta        = _time * angularVelAroundParent;
+        _data[ii].location = glm::vec3( info.parentDistance * std::cos( theta ),
+                                        info.parentDistance * std::sin( theta ),
                                         0.0f );
+
+        if ( info.parent != CelestialBody::Sun )
+        {
+            auto parentData = GetData( info.parent );
+            _data[ii].location += parentData.location;
+        }
 
         // body rotation about it's own axis
         float angularVelAboutOwnAxis =
@@ -416,6 +500,7 @@ void PlanetExplorer::Update()
                                          "Mercury",
                                          "Venus",
                                          "Earth",
+                                         "Moon",
                                          "Mars",
                                          "Jupiter",
                                          "Saturn",
@@ -965,9 +1050,9 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
     // ------------------------------------------------------------------------
     const auto &info  = PlanetsDB::GetInfo( body, true );
     glm::mat4   model = glm::scale( glm::mat4( 1.0f ),
-                                    glm::vec3( info.solarDistance,
-                                               info.solarDistance,
-                                               info.solarDistance ) );
+                                    glm::vec3( info.parentDistance,
+                                               info.parentDistance,
+                                               info.parentDistance ) );
 
     shaderToUse->SetUniformMat4f( "u_M", model );
     shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
@@ -1265,8 +1350,8 @@ void PlanetExplorer::ShowPlanetInfo()
         descColor );
 
     r.DrawText( std::format( "Distance from Sun: {:.0f} million km ({:.2f} AU)",
-                             info.solarDistance / 1'000'000'000,
-                             info.solarDistance * 6.6846E-12 ),
+                             info.parentDistance / 1'000'000'000,
+                             info.parentDistance * 6.6846E-12 ),
                 32,
                 ypos += 24,
                 descColor );

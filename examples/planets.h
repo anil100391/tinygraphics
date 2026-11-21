@@ -10,6 +10,20 @@
 #include <tinygraphics/utils/meshgl.h>
 
 // -----------------------------------------------------------------------------
+// TODO:
+// * New Features
+//   . Add moon
+//   . Sit at specific coordinates on a planet observe sky
+//   . Asteroid field
+//   . Add a spaceship to navigate between celestial bodies
+// * Improvements
+//   . Improve planet textures (normal maps etc)
+//   . Improve sun shader
+//   . Timing and speed enhancements
+//
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 enum class CelestialBody
 {
@@ -17,6 +31,7 @@ enum class CelestialBody
     Mercury,
     Venus,
     Earth,
+    Moon,
     Mars,
     Jupiter,
     Saturn,
@@ -79,15 +94,16 @@ class PlanetsDB
 public:
     struct Info
     {
-        std::string name;
-        std::string type           = "Planet";
-        float       radius         = 0.0f; // meters
-        float       mass           = 0.0f; // kilograms
-        float       solarDistance  = 0.0f; // meters
-        float       daysInAYear    = 0.0f; // earth days
-        float       hoursInADay    = 0.0f; // earth hours
-        float       axialTilt      = 0.0f; // degrees
-        float       surfaceGravity = 0.0f; // m/s^2
+        std::string   name;
+        std::string   type           = "Planet";
+        float         radius         = 0.0f; // meters
+        float         mass           = 0.0f; // kilograms
+        CelestialBody parent         = CelestialBody::Sun;
+        float         parentDistance = 0.0f; // meters
+        float         daysInAYear    = 0.0f; // earth days
+        float         hoursInADay    = 0.0f; // earth hours
+        float         axialTilt      = 0.0f; // degrees
+        float         surfaceGravity = 0.0f; // m/s^2
     };
 
     static Info GetInfo( CelestialBody body, bool normalized = false );
