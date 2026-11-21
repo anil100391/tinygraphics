@@ -36,7 +36,7 @@ Viewer::~Viewer()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Viewer::Update()
+void Viewer::Update( float deltaTime )
 {
     if ( !_glSubject )
     {
@@ -118,7 +118,7 @@ void Viewer::Update()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
-    tgrApplication::Update();
+    tgrApplication::Update( deltaTime );
 }
 
 // -----------------------------------------------------------------------------

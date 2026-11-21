@@ -23,7 +23,7 @@ public:
     VectorField();
     ~VectorField();
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
 
     virtual bool OnEvent( tgrEvent &evt ) override
     {
@@ -126,7 +126,7 @@ VectorField::~VectorField()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void VectorField::Update()
+void VectorField::Update( float deltaTime )
 {
     auto t = GetCurrentTime();
     if ( t - _lastUpdate > 0.04f )
@@ -173,7 +173,7 @@ void VectorField::Update()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
-    tgrApplication::Update();
+    tgrApplication::Update( deltaTime );
 }
 
 // -----------------------------------------------------------------------------

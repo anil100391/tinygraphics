@@ -41,7 +41,7 @@ public:
 
     void Run();
 
-    virtual void Update();
+    virtual void Update( float deltaTime );
 
     void  GetWindowSize( int &width, int &height ) const noexcept;
     float GetCurrentTime() const noexcept;

@@ -15,7 +15,7 @@ public:
     Viewer( const tgrWindowProperties &wprops );
     virtual ~Viewer();
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
 
     virtual bool OnEvent( tgrEvent &evt ) override;
 

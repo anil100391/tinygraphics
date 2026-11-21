@@ -14,7 +14,7 @@ public:
           const std::filesystem::path &exeDir );
     virtual ~Game() = default;
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
     virtual bool OnEvent( tgrEvent &evt ) override;
 
 private:

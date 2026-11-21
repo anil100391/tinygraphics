@@ -122,7 +122,7 @@ public:
     PlanetExplorer( const tgrWindowProperties &wprops );
     virtual ~PlanetExplorer();
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
     virtual bool OnEvent( tgrEvent &evt ) override;
 
 private:
@@ -150,6 +150,11 @@ private:
 
     void PlaceCameraOnPlanet( CelestialBody body );
 
+    bool IsPaused() const
+    {
+        return _userPause || _internalPause;
+    }
+
     std::unique_ptr<tgrMeshGL> _sphereGLMesh;
     std::unique_ptr<tgrMeshGL> _ringsGLMesh;
     std::unique_ptr<tgrMeshGL> _ellipseGLMesh;
@@ -166,9 +171,10 @@ private:
 
     tgrCamera _camera;
 
-    int   _selectedBody = 0;
-    float _rotation     = 0.0f;
-    bool  _running      = true;
+    int   _selectedBody  = 0;
+    float _rotation      = 0.0f;
+    bool  _userPause     = false;
+    bool  _internalPause = false;
 
     class Simulator;
     Simulator *_simulator = nullptr;

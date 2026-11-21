@@ -277,7 +277,17 @@ public:
         return _speedFac;
     }
 
-    void Update( float time );
+    float GetCurrentTime() const
+    {
+        return _time;
+    }
+
+    void SetCurrentTime( float time )
+    {
+        _time = time;
+    }
+
+    void Update( float deltaTime );
 
     struct Data
     {
@@ -305,9 +315,9 @@ PlanetExplorer::Simulator::Simulator()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::Simulator::Update( float time )
+void PlanetExplorer::Simulator::Update( float deltaTime )
 {
-    _time = _speedFac * time;
+    _time += _speedFac * deltaTime;
 
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
@@ -448,23 +458,18 @@ PlanetExplorer::~PlanetExplorer()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::Update()
+void PlanetExplorer::Update( float deltaTime )
 {
-    if ( _running )
-    {
-        _rotation = -0.5 * GetCurrentTime();
-    }
-
     if ( !_simulator )
     {
         _simulator = new Simulator;
     }
 
-    static float time_offset = 0.0f;
     _simulator->SetSpeedFactor( settings.speed );
-    if ( _running )
+
+    if ( !IsPaused() )
     {
-        _simulator->Update( GetCurrentTime() + time_offset );
+        _simulator->Update( deltaTime );
     }
 
     // update camera
@@ -563,12 +568,51 @@ void PlanetExplorer::Update()
 
     ImGui::Separator();
 
-    ImGui::Text( "Simulation Speed" );
+    auto timeInSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::duration<double>( _simulator->GetCurrentTime() ) );
+
+    using namespace std::chrono_literals;
+    auto days = timeInSeconds / 24h;
+    timeInSeconds -= days * 24h;
+
+    auto hours = timeInSeconds / 1h;
+    timeInSeconds -= hours * 1h;
+
+    auto minutes = timeInSeconds / 1min;
+    timeInSeconds -= minutes * 1min;
+
+    auto seconds = timeInSeconds / 1s;
+
+    ImGui::Text( "Time" );
+
     static int speed = 3600 * 24;
-    ImGui::DragInt( "Speed", &speed, 1, 3600 * 24 * 10 );
+    ImGui::DragInt( "Speed", &speed, 1, 1, 3600 * 24 * 10, "%dx" );
     settings.speed = speed;
 
-    ImGui::DragFloat( "Time March", &time_offset, 1, 3600 * 24 * 10 );
+    // Set Current Time
+    int day    = days;
+    int hour   = hours;
+    int minute = minutes;
+    ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0.0f, 4.0f ) );
+    float width = ImGui::CalcItemWidth() / 3.0f;
+    ImGui::PushItemWidth( width );
+    bool isSettingTime = false;
+    ImGui::DragInt( "##Day", &day, 1.0f, 0, 0, "Day %d, " );
+    isSettingTime |= ImGui::IsItemActive();
+    ImGui::SameLine();
+    ImGui::DragInt( "##Hour", &hour, 1.0f, 0, 0, "Hr %2d, " );
+    isSettingTime |= ImGui::IsItemActive();
+    ImGui::SameLine();
+    ImGui::DragInt( "Now", &minute, 1.0f, 0, 0, "Min %2d" );
+    isSettingTime |= ImGui::IsItemActive();
+
+    _internalPause = isSettingTime;
+
+    ImGui::PopItemWidth();
+    ImGui::PopStyleVar();
+
+    _simulator->SetCurrentTime( day * 24 * 3600 + hour * 3600 + minute * 60 +
+                                seconds );
 
     ImGui::Separator();
     ImGui::Text( "Style" );
@@ -580,7 +624,8 @@ void PlanetExplorer::Update()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
 
-    tgrApplication::Update();
+    // Log( LogLevel::Debug, "{}", deltaTime );
+    tgrApplication::Update( deltaTime );
 }
 
 // -----------------------------------------------------------------------------
@@ -590,7 +635,7 @@ bool PlanetExplorer::OnEvent( tgrEvent &evt )
     if ( evt.GetEventType() == tgrEventType::KeyPressed &&
          static_cast<tgrKeyEvent &>( evt ).GetKeyCode() == 32 )
     {
-        _running = !_running;
+        _userPause = !_userPause;
     }
 
     if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::TRACK )

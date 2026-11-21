@@ -25,7 +25,7 @@ public:
     DepthBufferApp();
     ~DepthBufferApp() = default;
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
 
 private:
     std::unique_ptr<VertexArray>  _vao;
@@ -113,7 +113,7 @@ DepthBufferApp::DepthBufferApp()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void DepthBufferApp::Update()
+void DepthBufferApp::Update( float deltaTime )
 {
     Renderer renderer;
 
@@ -158,7 +158,7 @@ void DepthBufferApp::Update()
 
     renderer.Draw( *_vao, *_ibo, *_shader );
 
-    Application::Update();
+    Application::Update( deltaTime );
 }
 
 // -----------------------------------------------------------------------------

@@ -24,7 +24,7 @@ public:
     TestsApplication();
     ~TestsApplication() = default;
 
-    virtual void Update() override;
+    virtual void Update( float deltaTime ) override;
 
 private:
     std::unique_ptr<tgrVertexArray>  _vao;
@@ -119,7 +119,7 @@ TestsApplication::TestsApplication()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void TestsApplication::Update()
+void TestsApplication::Update( float deltaTime )
 {
     tgrRenderer renderer;
     glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
@@ -144,7 +144,7 @@ void TestsApplication::Update()
 
     // draw
     renderer.Draw( *_vao, *_ibo, *_shader );
-    tgrApplication::Update();
+    tgrApplication::Update( deltaTime );
 }
 
 // -----------------------------------------------------------------------------

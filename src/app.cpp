@@ -279,7 +279,7 @@ tgrApplication::~tgrApplication()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void tgrApplication::Update()
+void tgrApplication::Update( float deltaTime )
 {
     glfwSwapBuffers( _window );
     glfwPollEvents();
@@ -319,6 +319,9 @@ void tgrApplication::Run()
 {
     while ( !glfwWindowShouldClose( _window ) )
     {
-        Update();
+        static float lastUpdateTime = GetCurrentTime();
+        float        currentTime    = GetCurrentTime();
+        Update( currentTime - lastUpdateTime );
+        lastUpdateTime = currentTime;
     }
 }
