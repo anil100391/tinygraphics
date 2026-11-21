@@ -11,14 +11,17 @@
 
 // -----------------------------------------------------------------------------
 // TODO:
+// -----------------------------------------------------------------------------
 // * New Features
-//   . Add moon
+//   . Add moons
 //   . Sit at specific coordinates on a planet observe sky
 //   . Asteroid field
 //   . Add a spaceship to navigate between celestial bodies
+//   . Annotating bodies
 // * Improvements
 //   . Improve planet textures (normal maps etc)
 //   . Improve sun shader
+//   . Improve orbit shader
 //   . Timing and speed enhancements
 //
 // -----------------------------------------------------------------------------

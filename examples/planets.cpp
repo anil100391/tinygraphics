@@ -435,7 +435,7 @@ PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     ImGui::GetIO().FontDefault = font;
 
     _camera.SetPosition( glm::vec3( -0.0014663, 0.0356589, 0.00140489 ) );
-    _camera.SetPosition( glm::vec3( 0.0f, 0.0f, 0.0140489 ) );
+    _camera.SetPosition( glm::vec3( 0.0f, 0.0f, 0.080489 ) );
 
     _camera.SetUpVec( glm::vec3( -0.151733, -0.0486303, 0.987225 ) );
     _camera.SetUpVec( glm::vec3( 0.0f, 1.0f, 0.0f ) );
@@ -496,35 +496,34 @@ void PlanetExplorer::Update( float deltaTime )
     ImGui::Begin( "Explore" );
     static int  current_track_mode = 0;
     const char *cameraModes[]      = { "Track", "Point of View" };
-    ImGui::Combo(
-        "Camera", &current_track_mode, cameraModes, IM_COUNTOF( cameraModes ) );
+    ImGui::Text( "Camera" );
+
+    ImGui::PushItemWidth( -FLT_MIN );
+    ImGui::Combo( "##Camera",
+                  &current_track_mode,
+                  cameraModes,
+                  IM_COUNTOF( cameraModes ) );
+
+    ImGui::PopItemWidth();
+
     _camera.SetControllerMode(
         static_cast<tgrCamera::CONTROLLER_MODE>( current_track_mode ) );
 
-    const char *bodyNames[NumBodies] = { "Sun",
-                                         "Mercury",
-                                         "Venus",
-                                         "Earth",
-                                         "Moon",
-                                         "Mars",
-                                         "Jupiter",
-                                         "Saturn",
-                                         "Saturn Rings",
-                                         "Uranus",
-                                         "Neptune",
-                                         "Pluto" };
-
+    ImGui::Text( "Celestial Body" );
     if ( ImGui::BeginListBox(
              "##bodies",
              ImVec2( -FLT_MIN,
                      ( NumBodies + 0.1 ) *
                          ImGui::GetTextLineHeightWithSpacing() ) ) )
     {
-        for ( int n = 0; n < IM_COUNTOF( bodyNames ); n++ )
+        for ( int n = 0; n < NumBodies; n++ )
         {
             bool                 isSelected = ( _selectedBody == n );
             ImGuiSelectableFlags flags      = 0;
-            if ( ImGui::Selectable( bodyNames[n], isSelected, flags ) )
+            if ( ImGui::Selectable(
+                     PlanetsDB::GetInfo( ToBody( n ) ).name.c_str(),
+                     isSelected,
+                     flags ) )
             {
                 if ( !_cameraAnimator )
                 {
@@ -593,18 +592,21 @@ void PlanetExplorer::Update( float deltaTime )
     int day    = days;
     int hour   = hours;
     int minute = minutes;
-    ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0.0f, 4.0f ) );
-    float width = ImGui::CalcItemWidth() / 3.0f;
+
+    ImGui::Text( "Day    Hour   Minute" );
+
+    ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 3.0f, 4.0f ) );
+    float width = ImGui::CalcItemWidth() / 3.0f - 2.0f;
     ImGui::PushItemWidth( width );
     bool isSettingTime = false;
-    ImGui::DragInt( "##Day", &day, 1.0f, 0, 0, "Day %d, " );
-    isSettingTime |= ImGui::IsItemActive();
+    ImGui::DragInt( "##Day", &day, 1.0f, 0, 0, "%d" );
+    isSettingTime |= ImGui::IsItemActiveAsInputText();
     ImGui::SameLine();
-    ImGui::DragInt( "##Hour", &hour, 1.0f, 0, 0, "Hr %2d, " );
-    isSettingTime |= ImGui::IsItemActive();
+    ImGui::DragInt( "##Hour", &hour, 1.0f, 0, 0, "%2d" );
+    isSettingTime |= ImGui::IsItemActiveAsInputText();
     ImGui::SameLine();
-    ImGui::DragInt( "Now", &minute, 1.0f, 0, 0, "Min %2d" );
-    isSettingTime |= ImGui::IsItemActive();
+    ImGui::DragInt( "Now", &minute, 1.0f, 0, 0, "%2d" );
+    isSettingTime |= ImGui::IsItemActiveAsInputText();
 
     _internalPause = isSettingTime;
 
