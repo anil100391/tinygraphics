@@ -134,7 +134,7 @@ void PlanetsDB::PopulateDB()
         info.parentDistance = 1.496e+11;
         info.daysInAYear    = 365.256;
         info.hoursInADay    = 23.934;
-        info.axialTilt      = 0.0f;
+        info.axialTilt      = 23.44f;
         info.surfaceGravity = 9.81;
     }
 
