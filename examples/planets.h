@@ -49,48 +49,7 @@ enum class CelestialBody
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-constexpr int ToIndex( CelestialBody body )
-{
-    return static_cast<int>( body );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-constexpr CelestialBody ToBody( int index )
-{
-    if ( index < 0 || index >= static_cast<int>( CelestialBody::Count ) )
-    {
-        throw std::out_of_range( "Invalid CelestialBody index" );
-    }
-
-    return static_cast<CelestialBody>( index );
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-std::string ToLower( std::string s, const char whiteSpaceReplacer = '_' )
-{
-    std::transform( s.begin(),
-                    s.end(),
-                    s.begin(),
-                    [whiteSpaceReplacer]( unsigned char c )
-                    {
-                        return std::tolower( c ) == ' ' ? whiteSpaceReplacer
-                                                        : std::tolower( c );
-                    } );
-    return s;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-float ToRadians( float degrees )
-{
-    return degrees * std::numbers::pi / 180.0f;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-constexpr int NumBodies = ToIndex( CelestialBody::Count );
+constexpr int NumBodies = static_cast<int>( CelestialBody::Count );
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -144,7 +103,8 @@ private:
     std::pair<tgrMeshGL *, unsigned int> GetGLPointsMesh();
     std::unique_ptr<tgrShader>          &GetShader( CelestialBody body );
 
-    void UpdateScreenSizes();
+    void ComputeCelestialBodyColors();
+    void UpdateScreenSides();
     bool IsTooTinyToDrawAs3D( CelestialBody body ) const;
     void DrawCelestialBodies();
     void BindGLMesh( tgrMeshGL *meshGL, bool bind );
@@ -176,6 +136,7 @@ private:
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
     std::array<float, NumBodies>                       _screenSizes;
+    std::array<glm::vec3, NumBodies>                   _bodyColors;
 
     tgrCamera _camera;
 

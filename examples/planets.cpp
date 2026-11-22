@@ -6,12 +6,14 @@
 
 #include <glad/glad.h>
 
-#include <imgui.h>planennt
+#include <imgui.h>
 #include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include <tinygraphics/vertexbufferlayout.h>
+
+#include <stb/stb_image.h>
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -37,7 +39,7 @@ constexpr float largestRadius             = 6.9634e8f;  // Sun
 constexpr float near_plane                = 0.000005f;  // near clipping plane
 constexpr float far_plane                 = 100.0f;     // far clipping plane
 constexpr float point_draw_threshold_size = 8.0f;       // in pixels
-constexpr float point_draw_min_size       = 2.0f;       // in pixels
+constexpr float point_draw_min_size       = 4.0f;       // in pixels
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -54,6 +56,47 @@ struct Settings
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 Settings settings;
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+constexpr int ToIndex( CelestialBody body )
+{
+    return static_cast<int>( body );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+constexpr CelestialBody ToBody( int index )
+{
+    if ( index < 0 || index >= static_cast<int>( CelestialBody::Count ) )
+    {
+        throw std::out_of_range( "Invalid CelestialBody index" );
+    }
+
+    return static_cast<CelestialBody>( index );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+std::string ToLower( std::string s, const char whiteSpaceReplacer = '_' )
+{
+    std::transform( s.begin(),
+                    s.end(),
+                    s.begin(),
+                    [whiteSpaceReplacer]( unsigned char c )
+                    {
+                        return std::tolower( c ) == ' ' ? whiteSpaceReplacer
+                                                        : std::tolower( c );
+                    } );
+    return s;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+float ToRadians( float degrees )
+{
+    return degrees * std::numbers::pi / 180.0f;
+}
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -449,6 +492,8 @@ PlanetExplorer::PlanetExplorer( const tgrWindowProperties &wprops )
     _camera.SetFieldOfView( glm::radians( 30.0f ) );
 
     _camera.SetType( tgrCamera::PROJECTION::PERSPECTIVE );
+
+    ComputeCelestialBodyColors();
 }
 
 // -----------------------------------------------------------------------------
@@ -1224,9 +1269,10 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
         }
         else
         {
-            vertices[cnt++] = 0.9f;
-            vertices[cnt++] = 0.9f;
-            vertices[cnt++] = 0.9f;
+            auto color      = _bodyColors[ToIndex( body )];
+            vertices[cnt++] = color.x;
+            vertices[cnt++] = color.y;
+            vertices[cnt++] = color.z;
         }
 
         // radius
@@ -1273,6 +1319,40 @@ std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
         return _planetShaderWithDepthMap;
     default:
         return _planetShader;
+    }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::ComputeCelestialBodyColors()
+{
+    for ( auto ii = 0; ii < NumBodies; ++ii )
+    {
+        const auto           &info = PlanetsDB::GetInfo( ToBody( ii ) );
+        std::filesystem::path colorTexFile =
+            exeDir.string() + "/assets/" + ToLower( info.name ) + ".jpg";
+        if ( std::filesystem::exists( colorTexFile ) )
+        {
+            int  w = 0, h = 0, comps = 0;
+            auto localBuffer =
+                stbi_load( colorTexFile.string().c_str(), &w, &h, &comps, 3 );
+            glm::vec3 color{ 0.0f, 0.0f, 0.0f };
+            for ( auto pix = 0; pix < w * h; ++pix )
+            {
+                float r = localBuffer[3 * pix + 0] / 255.0f;
+                float g = localBuffer[3 * pix + 1] / 255.0f;
+                float b = localBuffer[3 * pix + 2] / 255.0f;
+                color += glm::vec3( r, g, b );
+            }
+
+            stbi_image_free( localBuffer );
+            color /= ( w * h );
+            _bodyColors[ii] = 1.5f * color;
+        }
+        else
+        {
+            _bodyColors[ii] = glm::vec3( 0.9f, 0.9f, 0.0f ); // sun color
+        }
     }
 }
 
