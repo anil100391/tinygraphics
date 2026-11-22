@@ -23,6 +23,8 @@
 //   . Improve sun shader
 //   . Improve orbit shader
 //   . Timing and speed enhancements
+//   . Better camera controls
+//   . Better on planet pov
 //
 // -----------------------------------------------------------------------------
 
