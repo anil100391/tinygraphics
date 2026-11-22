@@ -6,7 +6,7 @@
 
 #include <glad/glad.h>
 
-#include <imgui.h>
+#include <imgui.h>planennt
 #include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -32,10 +32,12 @@ std::vector<PlanetsDB::Info> PlanetsDB::s_database;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-constexpr float largestSolarDistance = 5.9064e12f; // Pluto
-constexpr float largestRadius        = 6.9634e8f;  // Sun
-constexpr float near_plane           = 0.000005f;  // near clipping plane
-constexpr float far_plane            = 100.0f;     // far clipping plane
+constexpr float largestSolarDistance      = 5.9064e12f; // Pluto
+constexpr float largestRadius             = 6.9634e8f;  // Sun
+constexpr float near_plane                = 0.000005f;  // near clipping plane
+constexpr float far_plane                 = 100.0f;     // far clipping plane
+constexpr float point_draw_threshold_size = 8.0f;       // in pixels
+constexpr float point_draw_min_size       = 2.0f;       // in pixels
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -1145,6 +1147,9 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateCelestialBodiesPointShader()
     // ------------------------------------------------------------------------
     shaderToUse->SetUniform1f( "u_viewPortHeight", height );
     shaderToUse->SetUniform1f( "u_fovY", _camera.GetFieldOfView() );
+    shaderToUse->SetUniform1f( "u_pointDrawThresholdSize",
+                               point_draw_threshold_size );
+    shaderToUse->SetUniform1f( "u_pointDrawMinSize", point_draw_min_size );
 
     return shaderToUse;
 }
@@ -1183,10 +1188,11 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
 {
     // Create a list of points for each celestial body that could be drawn as
     // point
-    std::array<CelestialBody, 10u> bodies = { CelestialBody::Sun,
+    std::array<CelestialBody, 11u> bodies = { CelestialBody::Sun,
                                               CelestialBody::Mercury,
                                               CelestialBody::Venus,
                                               CelestialBody::Earth,
+                                              CelestialBody::Moon,
                                               CelestialBody::Mars,
                                               CelestialBody::Jupiter,
                                               CelestialBody::Saturn,
@@ -1195,7 +1201,7 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
                                               CelestialBody::Pluto };
 
     static std::vector<float> vertices;
-    vertices.resize( ( 3 + 1 + 3 ) * bodies.size() );
+    vertices.resize( ( 3 + 3 + 1 + 1 ) * bodies.size() );
 
     int cnt = 0;
     for ( const auto &body : bodies )
@@ -1208,9 +1214,6 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
         vertices[cnt++] = location.x;
         vertices[cnt++] = location.y;
         vertices[cnt++] = location.z;
-
-        // radius
-        vertices[cnt++] = info.radius;
 
         // color
         if ( body == CelestialBody::Sun )
@@ -1225,14 +1228,21 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
             vertices[cnt++] = 0.9f;
             vertices[cnt++] = 0.9f;
         }
+
+        // radius
+        vertices[cnt++] = info.radius;
+
+        // screen size
+        vertices[cnt++] = _screenSizes[ToIndex( body )];
     }
 
     if ( !_bodyPointsGL )
     {
         tgrVertexBufferLayout layout;
         layout.Push<float>( 3 ); // position
-        layout.Push<float>( 1 ); // radisu
         layout.Push<float>( 3 ); // color
+        layout.Push<float>( 1 ); // radius
+        layout.Push<float>( 1 ); // screen size
 
         std::vector<unsigned int> conn;
         _bodyPointsGL = std::make_unique<tgrMeshGL>(
@@ -1268,6 +1278,35 @@ std::unique_ptr<tgrShader> &PlanetExplorer::GetShader( CelestialBody body )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+void PlanetExplorer::UpdateScreenSizes()
+{
+    int width, height;
+    GetWindowSize( width, height );
+
+    for ( auto ii = 0u; ii < NumBodies; ++ii )
+    {
+        auto        body     = ToBody( ii );
+        const auto &info     = PlanetsDB::GetInfo( body, true );
+        const auto &simData  = _simulator->GetData( body );
+        const auto &location = simData.location / largestSolarDistance;
+        float       radius   = info.radius;
+
+        float distance   = glm::length( location - _camera.GetPosition() );
+        _screenSizes[ii] = radius * height /
+                           ( distance * tan( _camera.GetFieldOfView() * 0.5 ) );
+    }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool PlanetExplorer::IsTooTinyToDrawAs3D( CelestialBody body ) const
+{
+    return _screenSizes[ToIndex( body )] <
+           ImGui::GetStyle()._MainScale * point_draw_threshold_size;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void PlanetExplorer::DrawCelestialBodies()
 {
     CreateShader();
@@ -1276,6 +1315,7 @@ void PlanetExplorer::DrawCelestialBodies()
     // Draw celestial bodies. Draw point representation first and for planets
     // that are big enough we can skip drawing them as mesh
     // -------------------------------------------------------------------------
+    UpdateScreenSizes();
     auto [pointsMeshGL, numPoints] = GetGLPointsMesh();
     BindGLMesh( pointsMeshGL, true );
     auto &pointsShader = UpdateCelestialBodiesPointShader();
@@ -1286,6 +1326,11 @@ void PlanetExplorer::DrawCelestialBodies()
     for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
         auto body = ToBody( ii );
+
+        if ( IsTooTinyToDrawAs3D( body ) )
+        {
+            continue;
+        }
 
         // Since we want to see 2d rings mesh from both sides
         if ( body == CelestialBody::SaturnRings )

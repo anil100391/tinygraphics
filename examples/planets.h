@@ -4,8 +4,8 @@
 #include <memory>
 #include <tinygraphics/app.h>
 
-#include <tinygraphics/shader.h>
 #include <tinygraphics/camera.h>
+#include <tinygraphics/shader.h>
 #include <tinygraphics/texture.h>
 #include <tinygraphics/utils/meshgl.h>
 
@@ -144,6 +144,8 @@ private:
     std::pair<tgrMeshGL *, unsigned int> GetGLPointsMesh();
     std::unique_ptr<tgrShader>          &GetShader( CelestialBody body );
 
+    void UpdateScreenSizes();
+    bool IsTooTinyToDrawAs3D( CelestialBody body ) const;
     void DrawCelestialBodies();
     void BindGLMesh( tgrMeshGL *meshGL, bool bind );
     void BindEllipseGeometry( bool bind );
@@ -173,6 +175,7 @@ private:
     std::unique_ptr<tgrMeshGL>                         _bodyPointsGL;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
+    std::array<float, NumBodies>                       _screenSizes;
 
     tgrCamera _camera;
 
