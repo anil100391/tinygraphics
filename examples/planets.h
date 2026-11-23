@@ -104,7 +104,7 @@ private:
     std::unique_ptr<tgrShader>          &GetShader( CelestialBody body );
 
     void ComputeCelestialBodyColors();
-    void UpdateScreenSides();
+    void UpdateScreenSizes();
     bool IsTooTinyToDrawAs3D( CelestialBody body ) const;
     void DrawCelestialBodies();
     void BindGLMesh( tgrMeshGL *meshGL, bool bind );
