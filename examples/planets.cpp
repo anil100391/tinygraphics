@@ -1370,7 +1370,7 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     shaderToUse->SetUniform1f( "u_Time", GetCurrentTime() );
 
     _terrainCamera.SetPosition( glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    _terrainCamera.SetLookAt( glm::vec3( 0.0f, 20.0f, 0.05f ) );
+    _terrainCamera.SetLookAt( glm::vec3( 0.0f, 20.0f, 2.0f ) );
     _terrainCamera.SetUpVec( glm::vec3( 0.0f, 0.0f, 1.0f ) );
 
     // Apply yaw pitch and roll now
