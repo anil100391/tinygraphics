@@ -99,6 +99,7 @@ private:
     std::unique_ptr<tgrShader> &UpdateCelestialBodyShader( CelestialBody body );
     std::unique_ptr<tgrShader> &UpdateOrbitShader( CelestialBody body );
     std::unique_ptr<tgrShader> &UpdateCelestialBodiesPointShader();
+    std::unique_ptr<tgrShader> &UpdateLandShader();
 
     std::unique_ptr<tgrMeshGL>          &GetGLMesh( CelestialBody body,
                                                     bool          createIfNull );
@@ -116,6 +117,15 @@ private:
     void CreateSphereMesh( float radius );
     void CreateRingsMesh( float innerRadius, float outerRadius );
     void CreateEllipseMesh( float a, float b, size_t numSegments );
+    void CreatePlaneMesh( float  w,
+                          float  h,
+                          size_t numXSegments,
+                          size_t numYSegments );
+
+    void GetLocalAxesAtBody( CelestialBody body,
+                             glm::vec3    &localPos,
+                             glm::vec3    &localY,
+                             glm::vec3    &localZ );
 
     void PlaceCameraOnPlanet( CelestialBody body );
 
@@ -127,6 +137,7 @@ private:
     std::unique_ptr<tgrMeshGL> _sphereGLMesh;
     std::unique_ptr<tgrMeshGL> _ringsGLMesh;
     std::unique_ptr<tgrMeshGL> _ellipseGLMesh;
+    std::unique_ptr<tgrMeshGL> _planeGLMesh;
     std::unique_ptr<tgrShader> _sunShader;
     std::unique_ptr<tgrShader> _planetShaderWithDepthMap;
     std::unique_ptr<tgrShader> _planetShader;
@@ -137,10 +148,12 @@ private:
     std::unique_ptr<tgrMeshGL>                         _bodyPointsGL;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _textures;
     std::array<std::unique_ptr<tgrTexture>, NumBodies> _normalMaps;
+    std::unique_ptr<tgrTexture>                        _landTexture;
     std::array<float, NumBodies>                       _screenSizes;
     std::array<glm::vec3, NumBodies>                   _bodyColors;
 
     tgrCamera _camera;
+    tgrCamera _terrainCamera;
 
     int   _selectedBody  = 0;
     float _povLattitude  = 0.0f;

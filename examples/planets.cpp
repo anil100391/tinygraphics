@@ -961,7 +961,70 @@ void PlanetExplorer::CreateEllipseMesh( float a, float b, size_t numSegments )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
+void PlanetExplorer::CreatePlaneMesh( float  w,
+                                      float  h,
+                                      size_t numXSegments,
+                                      size_t numYSegments )
+{
+    float minX   = -w / 2;
+    float minY   = -h / 2;
+    float deltaX = w / numXSegments;
+    float deltaY = h / numYSegments;
+
+    std::vector<float> vertices;
+    for ( size_t ii = 0; ii < numYSegments + 1u; ++ii )
+    {
+        float y = minY + deltaY * ii;
+        for ( size_t jj = 0; jj < numXSegments + 1u; ++jj )
+        {
+            float x = minX + deltaX * jj;
+
+            // position
+            vertices.push_back( x );
+            vertices.push_back( y );
+            vertices.push_back( 0.0f );
+
+            // normal
+            vertices.push_back( 0.0f );
+            vertices.push_back( 0.0f );
+            vertices.push_back( 1.0f );
+
+            // texture coordinate
+            vertices.push_back( static_cast<float>( jj ) / numXSegments );
+            vertices.push_back( static_cast<float>( ii ) / numYSegments );
+        }
+    }
+
+    tgrVertexBufferLayout layout;
+    layout.Push<float>( 3 ); // position
+    layout.Push<float>( 3 ); // normal
+    layout.Push<float>( 2 ); // texture coordinate
+
+    std::vector<unsigned int> conn;
+    conn.reserve( 3 * numXSegments * numYSegments * 2 );
+    for ( size_t ii = 0; ii < numYSegments; ++ii )
+    {
+        for ( size_t jj = 0; jj < numXSegments; ++jj )
+        {
+            conn.push_back( ii * numXSegments + jj );
+            conn.push_back( ii * numXSegments + jj + 1u );
+            conn.push_back( ( ii + 1u ) * numXSegments + jj + 1u );
+
+            conn.push_back( ii * numXSegments + jj );
+            conn.push_back( ( ii + 1u ) * numXSegments + jj + 1u );
+            conn.push_back( ( ii + 1u ) * numXSegments + jj );
+        }
+    }
+
+    _planeGLMesh = std::make_unique<tgrMeshGL>( vertices, layout, conn );
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::GetLocalAxesAtBody( CelestialBody body,
+                                         glm::vec3    &localPos,
+                                         glm::vec3    &localY,
+                                         glm::vec3    &localZ )
 {
     const auto &simData   = _simulator->GetData( body );
     auto        planetLoc = simData.location / largestSolarDistance;
@@ -973,31 +1036,49 @@ void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
 
     float rAtLat = info.radius * std::cos( lattitude );
 
-    auto cameraPos =
-        rAtLat * glm::vec3( std::cos( simData.rotation + longitude ),
-                            std::sin( simData.rotation + longitude ),
-                            0.0f );
+    localPos = rAtLat * glm::vec3( std::cos( simData.rotation + longitude ),
+                                   std::sin( simData.rotation + longitude ),
+                                   0.0f );
 
-    cameraPos.z = info.radius * std::sin( lattitude );
+    localPos.z = info.radius * std::sin( lattitude );
+
+    localZ = glm::normalize( localPos );
 
     // planet reference north pole
     auto north = glm::vec3( 0.0f, 0.0f, 1.0f );
-    auto east  = glm::normalize( glm::cross( north, cameraPos ) );
+    auto east  = glm::normalize( glm::cross( north, localZ ) );
 
     // apply axial tilt transformation
-    cameraPos = glm::vec4( cameraPos, 1.0f ) *
-                glm::rotate( glm::mat4( 1.0f ),
-                             glm::radians( info.axialTilt ),
-                             glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    localPos = glm::vec4( localPos, 1.0f ) *
+               glm::rotate( glm::mat4( 1.0f ),
+                            glm::radians( info.axialTilt ),
+                            glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+    localZ = glm::normalize( localPos );
+
+    localPos += planetLoc;
 
     east =
         glm::vec4( east, 1.0f ) * glm::rotate( glm::mat4( 1.0f ),
                                                glm::radians( info.axialTilt ),
                                                glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
-    _camera.SetPosition( planetLoc + cameraPos );
-    _camera.SetLookAt( east );
-    _camera.SetUpVec( cameraPos );
+    localY = east;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
+{
+    // localY is east, localZ is up
+    glm::vec3 localPos, localZ, localY;
+    GetLocalAxesAtBody( body, localPos, localY, localZ );
+
+    _camera.SetLookAt( localPos + localY );
+    // 1 meter up the actual surface
+    localPos += ( 1.0f / largestSolarDistance ) * localZ;
+    _camera.SetPosition( localPos );
+    _camera.SetUpVec( localZ );
 
     // Apply yaw pitch and roll now
     float dist = glm::length( _camera.GetLookAt() - _camera.GetPosition() );
@@ -1119,6 +1200,9 @@ void main()
             _normalMaps[ii] = std::make_unique<tgrTexture>( normalTexFile );
         }
     }
+
+    _landTexture = std::make_unique<tgrTexture>( exeDir.string() + "/assets/" +
+                                                 "noise.jpg" );
 }
 
 // -----------------------------------------------------------------------------
@@ -1263,6 +1347,84 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateCelestialBodiesPointShader()
     shaderToUse->SetUniform1f( "u_pointDrawThresholdSize",
                                point_draw_threshold_size );
     shaderToUse->SetUniform1f( "u_pointDrawMinSize", point_draw_min_size );
+
+    return shaderToUse;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
+{
+    if ( !_planetShader )
+    {
+        CreateShader();
+    }
+
+    auto &shaderToUse = _planetShader;
+
+    shaderToUse->Bind();
+
+    // ------------------------------------------------------------------------
+    // Time
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniform1f( "u_Time", GetCurrentTime() );
+
+    _terrainCamera.SetPosition( glm::vec3( 0.0f, 0.0f, 1.0f ) );
+    _terrainCamera.SetLookAt( glm::vec3( 0.0f, 20.0f, 0.05f ) );
+    _terrainCamera.SetUpVec( glm::vec3( 0.0f, 0.0f, 1.0f ) );
+
+    // Apply yaw pitch and roll now
+    float dist      = glm::length( _terrainCamera.GetLookAt() -
+                                   _terrainCamera.GetPosition() );
+    auto  lookAtDir = glm::normalize( _terrainCamera.GetLookAt() -
+                                      _terrainCamera.GetPosition() ); // local y
+    auto  upvec     = glm::normalize( _terrainCamera.GetUpVec() );    // local z
+    auto  localX    = glm::cross( lookAtDir, upvec );
+
+    // apply yaw about local z
+    auto yawRot = glm::rotate( glm::mat4( 1.0f ), glm::radians( _yaw ), upvec );
+    lookAtDir   = glm::vec4( lookAtDir, 1.0f ) * yawRot;
+    localX      = glm::vec4( localX, 1.0f ) * yawRot;
+
+    // apply pitch about local x
+    auto pitchRot =
+        glm::rotate( glm::mat4( 1.0f ), glm::radians( _pitch ), localX );
+    lookAtDir = glm::vec4( lookAtDir, 1.0f ) * pitchRot;
+    upvec     = glm::vec4( upvec, 1.0f ) * pitchRot;
+
+    _terrainCamera.SetUpVec( upvec );
+    _terrainCamera.SetLookAt( _terrainCamera.GetPosition() + dist * lookAtDir );
+
+    // ------------------------------------------------------------------------
+    // Light and Camera
+    // ------------------------------------------------------------------------
+    shaderToUse->SetUniform3f( "u_LightPos", _terrainCamera.GetPosition() );
+    shaderToUse->SetUniform3f( "u_CameraPos", _terrainCamera.GetPosition() );
+
+    // ------------------------------------------------------------------------
+    // MVP transforms
+    // ------------------------------------------------------------------------
+    auto model =
+        glm::scale( glm::mat4( 1.0f ), glm::vec3( 200.0f, 200.0f, 200.0f ) );
+    shaderToUse->SetUniformMat4f( "u_M", model );
+    shaderToUse->SetUniformMat4f( "u_V", _terrainCamera.GetViewMatrix() );
+
+    int width, height;
+    GetWindowSize( width, height );
+    float     aspectRatio = ( 1.0f * width ) / height;
+    glm::mat4 projection =
+        _camera.GetProjectionMatrix( aspectRatio, 0.1f, 200.0f );
+    shaderToUse->SetUniformMat4f( "u_P", projection );
+
+    // ------------------------------------------------------------------------
+    // land texture
+    // ------------------------------------------------------------------------
+    auto &colorTex = _landTexture;
+    if ( colorTex )
+    {
+        colorTex->Bind( 0 );
+        shaderToUse->SetUniform1i( "u_Texture", 0 );
+    }
 
     return shaderToUse;
 }
@@ -1459,6 +1621,11 @@ void PlanetExplorer::DrawCelestialBodies()
 {
     CreateShader();
 
+    if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV )
+    {
+        glEnable( GL_DEPTH_TEST );
+        glDepthMask( GL_FALSE );
+    }
     // -------------------------------------------------------------------------
     // Draw celestial bodies. Draw point representation first and for planets
     // that are big enough we can skip drawing them as mesh
@@ -1471,14 +1638,13 @@ void PlanetExplorer::DrawCelestialBodies()
         *pointsMeshGL->Vao(), *pointsShader, numPoints, tgrRenderer::POINTS );
     BindGLMesh( pointsMeshGL, false );
 
-    for ( auto ii = 0u; ii < NumBodies; ++ii )
+    for ( int ii = NumBodies - 1; ii >= 0; --ii )
     {
         auto body = ToBody( ii );
 
         if ( ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV &&
                ii == _selectedBody ) ||
              IsTooTinyToDrawAs3D( body ) )
-
         {
             continue;
         }
@@ -1516,6 +1682,25 @@ void PlanetExplorer::DrawCelestialBodies()
                 tgrRenderer::LINES );
     }
     BindEllipseGeometry( false );
+
+    if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV )
+    {
+        glDepthMask( GL_TRUE );
+    }
+
+    if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV )
+    {
+        if ( !_planeGLMesh )
+        {
+            CreatePlaneMesh( 2.0f, 2.0f, 100, 100 );
+        }
+
+        auto &landShader = UpdateLandShader();
+        r.Draw( *_planeGLMesh->Vao(), *_planeGLMesh->Ibo(), *landShader );
+    }
+
+    glEnable( GL_DEPTH_TEST );
+    glDepthMask( GL_TRUE );
 }
 
 // -----------------------------------------------------------------------------
