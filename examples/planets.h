@@ -22,9 +22,10 @@
 //   . Improve planet textures (normal maps etc)
 //   . Improve sun shader
 //   . Improve orbit shader
-//   . Timing and speed enhancements
 //   . Better camera controls
 //   . Better on planet pov
+// * Bugs
+//   . sun frag shader bug which makes it feel not rotating
 //
 // -----------------------------------------------------------------------------
 
@@ -70,7 +71,8 @@ public:
         float         surfaceGravity = 0.0f; // m/s^2
     };
 
-    static Info GetInfo( CelestialBody body, bool normalized = false );
+    static const Info &GetInfo( CelestialBody body );
+    static Info        GetInfo( CelestialBody body, bool normalized );
 
 private:
     static void PopulateDB();

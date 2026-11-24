@@ -100,14 +100,21 @@ float ToRadians( float degrees )
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
+const PlanetsDB::Info &PlanetsDB::GetInfo( CelestialBody body )
 {
     if ( s_database.empty() )
     {
         PopulateDB();
     }
 
-    auto info = s_database[ToIndex( body )];
+    return s_database[ToIndex( body )];
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+PlanetsDB::Info PlanetsDB::GetInfo( CelestialBody body, bool normalized )
+{
+    auto info = GetInfo( body );
 
     if ( normalized )
     {
@@ -134,8 +141,8 @@ void PlanetsDB::PopulateDB()
         info.parent         = CelestialBody::Sun;
         info.parentDistance = 0;
         info.daysInAYear    = 0;
-        info.hoursInADay    = 25;
-        info.axialTilt      = 0;
+        info.hoursInADay    = 25 * 24; // 25 earth days at equator
+        info.axialTilt      = 7.25;
         info.surfaceGravity = 274;
     }
 
@@ -368,7 +375,7 @@ void PlanetExplorer::Simulator::Update( float deltaTime )
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
         auto        body = ToBody( ii );
-        const auto &info = PlanetsDB::GetInfo( body, false );
+        const auto &info = PlanetsDB::GetInfo( body );
 
         // body position
         float angularVelAroundParent =
@@ -546,65 +553,71 @@ void PlanetExplorer::Update( float deltaTime )
     const char *cameraModes[]      = { "Track", "Point of View" };
     ImGui::Text( "Camera" );
 
-    ImGui::PushItemWidth( -FLT_MIN );
-    ImGui::Combo( "##Camera",
-                  &current_track_mode,
-                  cameraModes,
-                  IM_COUNTOF( cameraModes ) );
-
-    ImGui::PopItemWidth();
+    ImGui::Combo(
+        "Mode", &current_track_mode, cameraModes, IM_COUNTOF( cameraModes ) );
 
     _camera.SetControllerMode(
         static_cast<tgrCamera::CONTROLLER_MODE>( current_track_mode ) );
 
-    ImGui::Text( "Celestial Body" );
-    if ( ImGui::BeginListBox(
-             "##bodies",
-             ImVec2( -FLT_MIN,
-                     ( NumBodies + 0.1 ) *
-                         ImGui::GetTextLineHeightWithSpacing() ) ) )
-    {
-        for ( int n = 0; n < NumBodies; n++ )
+    static int selectedBody = 0;
+    ImGui::Combo(
+        _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::TRACK
+            ? "Look At"
+            : "Look From",
+        &selectedBody,
+        []( void *userData, int idx )
         {
-            bool                 isSelected = ( _selectedBody == n );
-            ImGuiSelectableFlags flags      = 0;
-            if ( ImGui::Selectable(
-                     PlanetsDB::GetInfo( ToBody( n ) ).name.c_str(),
-                     isSelected,
-                     flags ) )
-            {
-                if ( !_cameraAnimator )
-                {
-                    _cameraAnimator = new CameraAnimator( _camera );
-                }
+            const auto &info = PlanetsDB::GetInfo( ToBody( idx ) );
+            return info.name.c_str();
+        },
+        nullptr,
+        NumBodies );
 
-                const auto &info = _simulator->GetData( ToBody( n ) );
-                if ( _camera.GetControllerMode() ==
-                     tgrCamera::CONTROLLER_MODE::TRACK )
-                {
-                    _cameraAnimator->PointTo( info.location /
-                                                  largestSolarDistance,
-                                              GetCurrentTime(),
-                                              2.0f );
-                }
-                else if ( _camera.GetControllerMode() ==
-                          tgrCamera::CONTROLLER_MODE::POV )
-                {
-                    _cameraAnimator->LookFrom( info.location /
-                                                   largestSolarDistance,
-                                               GetCurrentTime(),
-                                               2.0f );
-                }
-
-                _selectedBody = n;
-            }
-
-            // Set the initial focus when opening the combo (scrolling +
-            // keyboard navigation focus)
-            if ( isSelected )
-                ImGui::SetItemDefaultFocus();
+    if ( _selectedBody != selectedBody )
+    {
+        if ( !_cameraAnimator )
+        {
+            _cameraAnimator = new CameraAnimator( _camera );
         }
-        ImGui::EndListBox();
+
+        const auto &info = _simulator->GetData( ToBody( selectedBody ) );
+        if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::TRACK )
+        {
+            _cameraAnimator->PointTo(
+                info.location / largestSolarDistance, GetCurrentTime(), 2.0f );
+        }
+        else if ( _camera.GetControllerMode() ==
+                  tgrCamera::CONTROLLER_MODE::POV )
+        {
+            _cameraAnimator->LookFrom(
+                info.location / largestSolarDistance, GetCurrentTime(), 2.0f );
+        }
+
+        _selectedBody = selectedBody;
+    }
+
+    if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV )
+    {
+        static float lattitude = 0.0f;
+        static float longitude = 0.0f;
+        float        width     = ImGui::CalcItemWidth() / 2.0f - 4.0f;
+        ImGui::PushItemWidth( width );
+        ImGui::DragFloat( "##Lattitude",
+                          &lattitude,
+                          1.0f,
+                          -90.0f,
+                          90.0f,
+                          lattitude >= 0 ? "%.2f N" : "%.2f S",
+                          ImGuiSliderFlags_ClampOnInput );
+        ImGui::SameLine();
+        ImGui::DragFloat( "Position",
+                          &longitude,
+                          1.0f,
+                          -180.0f,
+                          180.0f,
+                          longitude >= 0 ? "%.2f E" : "%.2f W",
+                          ImGuiSliderFlags_ClampOnInput );
+        ImGui::PopItemWidth();
     }
 
     ImGui::Separator();
@@ -682,6 +695,12 @@ void PlanetExplorer::Update( float deltaTime )
 // -----------------------------------------------------------------------------
 bool PlanetExplorer::OnEvent( tgrEvent &evt )
 {
+    if ( ImGui::IsAnyItemHovered() ||
+         ImGui::IsWindowHovered( ImGuiHoveredFlags_AnyWindow ) )
+    {
+        return false;
+    }
+
     if ( evt.GetEventType() == tgrEventType::KeyPressed &&
          static_cast<tgrKeyEvent &>( evt ).GetKeyCode() == 32 )
     {
@@ -928,10 +947,10 @@ void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
     // this will be better done using parametric coordinates on sphere
     // Let's choose (1, 0, 0) i.e. a point on equator for now. We can generalize
     // it later
-    const auto &info = PlanetsDB::GetInfo( body, true );
-    auto cameraPos   = info.radius * glm::vec3( std::cos( simData.rotation ),
-                                                std::sin( simData.rotation ),
-                                                0.0f );
+    auto info      = PlanetsDB::GetInfo( body, true );
+    auto cameraPos = info.radius * glm::vec3( std::cos( simData.rotation ),
+                                              std::sin( simData.rotation ),
+                                              0.0f );
 
     // planet reference north pole
     auto north = glm::vec3( 0.0f, 0.0f, 1.0f );
@@ -1081,7 +1100,7 @@ PlanetExplorer::UpdateCelestialBodyShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // MVP transforms
     // ------------------------------------------------------------------------
-    const auto &info     = PlanetsDB::GetInfo( body, true );
+    auto        info     = PlanetsDB::GetInfo( body, true );
     const auto &simData  = _simulator->GetData( body );
     glm::vec    location = simData.location / largestSolarDistance;
     glm::mat4   model =
@@ -1143,11 +1162,11 @@ PlanetExplorer::UpdateOrbitShader( CelestialBody body )
     // ------------------------------------------------------------------------
     // MVP transforms
     // ------------------------------------------------------------------------
-    const auto &info  = PlanetsDB::GetInfo( body, true );
-    glm::mat4   model = glm::scale( glm::mat4( 1.0f ),
-                                    glm::vec3( info.parentDistance,
-                                               info.parentDistance,
-                                               info.parentDistance ) );
+    auto      info  = PlanetsDB::GetInfo( body, true );
+    glm::mat4 model = glm::scale( glm::mat4( 1.0f ),
+                                  glm::vec3( info.parentDistance,
+                                             info.parentDistance,
+                                             info.parentDistance ) );
 
     shaderToUse->SetUniformMat4f( "u_M", model );
     shaderToUse->SetUniformMat4f( "u_V", _camera.GetViewMatrix() );
@@ -1251,7 +1270,7 @@ std::pair<tgrMeshGL *, unsigned int> PlanetExplorer::GetGLPointsMesh()
     int cnt = 0;
     for ( const auto &body : bodies )
     {
-        const auto &info    = PlanetsDB::GetInfo( body, true );
+        auto        info    = PlanetsDB::GetInfo( body, true );
         const auto &simData = _simulator->GetData( body );
 
         // position
@@ -1366,7 +1385,7 @@ void PlanetExplorer::UpdateScreenSizes()
     for ( auto ii = 0u; ii < NumBodies; ++ii )
     {
         auto        body     = ToBody( ii );
-        const auto &info     = PlanetsDB::GetInfo( body, true );
+        auto        info     = PlanetsDB::GetInfo( body, true );
         const auto &simData  = _simulator->GetData( body );
         const auto &location = simData.location / largestSolarDistance;
         float       radius   = info.radius;
