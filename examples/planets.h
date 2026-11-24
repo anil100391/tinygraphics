@@ -143,7 +143,11 @@ private:
     tgrCamera _camera;
 
     int   _selectedBody  = 0;
-    float _rotation      = 0.0f;
+    float _povLattitude  = 0.0f;
+    float _povLongitude  = 0.0f;
+    float _yaw           = 0.0f;
+    float _pitch         = 0.0f;
+    float _roll          = 0.0f;
     bool  _userPause     = false;
     bool  _internalPause = false;
 

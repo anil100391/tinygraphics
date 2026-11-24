@@ -598,26 +598,48 @@ void PlanetExplorer::Update( float deltaTime )
 
     if ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV )
     {
-        static float lattitude = 0.0f;
-        static float longitude = 0.0f;
-        float        width     = ImGui::CalcItemWidth() / 2.0f - 4.0f;
+        float width = ImGui::CalcItemWidth() / 2.0f - 4.0f;
         ImGui::PushItemWidth( width );
         ImGui::DragFloat( "##Lattitude",
-                          &lattitude,
+                          &_povLattitude,
                           1.0f,
                           -90.0f,
                           90.0f,
-                          lattitude >= 0 ? "%.2f N" : "%.2f S",
+                          _povLattitude >= 0 ? "%.2f N" : "%.2f S",
                           ImGuiSliderFlags_ClampOnInput );
         ImGui::SameLine();
         ImGui::DragFloat( "Position",
-                          &longitude,
+                          &_povLongitude,
                           1.0f,
                           -180.0f,
                           180.0f,
-                          longitude >= 0 ? "%.2f E" : "%.2f W",
+                          _povLongitude >= 0 ? "%.2f E" : "%.2f W",
                           ImGuiSliderFlags_ClampOnInput );
         ImGui::PopItemWidth();
+
+        ImGui::DragFloat( "Yaw",
+                          &_yaw,
+                          1.0f,
+                          -180.0f,
+                          180.0f,
+                          "%.2f",
+                          ImGuiSliderFlags_ClampOnInput );
+
+        ImGui::DragFloat( "Pitch",
+                          &_pitch,
+                          1.0f,
+                          -90.0f,
+                          90.0f,
+                          "%.2f",
+                          ImGuiSliderFlags_ClampOnInput );
+
+        ImGui::DragFloat( "Roll",
+                          &_roll,
+                          1.0f,
+                          0.0f,
+                          360.0f,
+                          "%.2f",
+                          ImGuiSliderFlags_ClampOnInput );
     }
 
     ImGui::Separator();
@@ -944,13 +966,19 @@ void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
     const auto &simData   = _simulator->GetData( body );
     auto        planetLoc = simData.location / largestSolarDistance;
 
-    // this will be better done using parametric coordinates on sphere
-    // Let's choose (1, 0, 0) i.e. a point on equator for now. We can generalize
-    // it later
-    auto info      = PlanetsDB::GetInfo( body, true );
-    auto cameraPos = info.radius * glm::vec3( std::cos( simData.rotation ),
-                                              std::sin( simData.rotation ),
-                                              0.0f );
+    auto info = PlanetsDB::GetInfo( body, true );
+
+    auto lattitude = ToRadians( _povLattitude );
+    auto longitude = ToRadians( _povLongitude );
+
+    float rAtLat = info.radius * std::cos( lattitude );
+
+    auto cameraPos =
+        rAtLat * glm::vec3( std::cos( simData.rotation + longitude ),
+                            std::sin( simData.rotation + longitude ),
+                            0.0f );
+
+    cameraPos.z = info.radius * std::sin( lattitude );
 
     // planet reference north pole
     auto north = glm::vec3( 0.0f, 0.0f, 1.0f );
@@ -970,6 +998,27 @@ void PlanetExplorer::PlaceCameraOnPlanet( CelestialBody body )
     _camera.SetPosition( planetLoc + cameraPos );
     _camera.SetLookAt( east );
     _camera.SetUpVec( cameraPos );
+
+    // Apply yaw pitch and roll now
+    float dist = glm::length( _camera.GetLookAt() - _camera.GetPosition() );
+    auto  lookAtDir = glm::normalize( _camera.GetLookAt() -
+                                      _camera.GetPosition() ); // local y
+    auto  upvec     = glm::normalize( _camera.GetUpVec() );    // local z
+    auto  localX    = glm::cross( lookAtDir, upvec );
+
+    // apply yaw about local z
+    auto yawRot = glm::rotate( glm::mat4( 1.0f ), glm::radians( _yaw ), upvec );
+    lookAtDir   = glm::vec4( lookAtDir, 1.0f ) * yawRot;
+    localX      = glm::vec4( localX, 1.0f ) * yawRot;
+
+    // apply pitch about local x
+    auto pitchRot =
+        glm::rotate( glm::mat4( 1.0f ), glm::radians( _pitch ), localX );
+    lookAtDir = glm::vec4( lookAtDir, 1.0f ) * pitchRot;
+    upvec     = glm::vec4( upvec, 1.0f ) * pitchRot;
+
+    _camera.SetUpVec( upvec );
+    _camera.SetLookAt( _camera.GetPosition() + dist * lookAtDir );
 }
 
 // -----------------------------------------------------------------------------
@@ -1426,7 +1475,10 @@ void PlanetExplorer::DrawCelestialBodies()
     {
         auto body = ToBody( ii );
 
-        if ( IsTooTinyToDrawAs3D( body ) )
+        if ( ( _camera.GetControllerMode() == tgrCamera::CONTROLLER_MODE::POV &&
+               ii == _selectedBody ) ||
+             IsTooTinyToDrawAs3D( body ) )
+
         {
             continue;
         }
