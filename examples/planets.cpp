@@ -667,7 +667,7 @@ void PlanetExplorer::Update( float deltaTime )
 
     ImGui::Text( "Time" );
 
-    static int speed = 3600 * 24;
+    static int speed = 3600;
     ImGui::DragInt( "Speed", &speed, 1, 1, 3600 * 24 * 10, "%dx" );
     settings.speed = speed;
 
@@ -966,6 +966,11 @@ void PlanetExplorer::CreatePlaneMesh( float  w,
                                       size_t numXSegments,
                                       size_t numYSegments )
 {
+    int         textureWidth, textureHeight, comps;
+    std::string landTexFile = exeDir.string() + "/assets/" + "noise.jpg";
+    auto        localBuffer = stbi_load(
+        landTexFile.c_str(), &textureWidth, &textureHeight, &comps, 1 );
+
     float minX   = -w / 2;
     float minY   = -h / 2;
     float deltaX = w / numXSegments;
@@ -979,10 +984,17 @@ void PlanetExplorer::CreatePlaneMesh( float  w,
         {
             float x = minX + deltaX * jj;
 
+            float   u             = static_cast<float>( jj ) / numXSegments;
+            float   v             = static_cast<float>( ii ) / numYSegments;
+            int     imageX        = u * textureWidth;
+            int     imageY        = v * textureHeight;
+            uint8_t h             = localBuffer[imageY * textureWidth + imageX];
+            float   terrainHeight = ( 0.005f * h ) / 255;
+
             // position
             vertices.push_back( x );
             vertices.push_back( y );
-            vertices.push_back( 0.0f );
+            vertices.push_back( terrainHeight );
 
             // normal
             vertices.push_back( 0.0f );
@@ -990,10 +1002,12 @@ void PlanetExplorer::CreatePlaneMesh( float  w,
             vertices.push_back( 1.0f );
 
             // texture coordinate
-            vertices.push_back( static_cast<float>( jj ) / numXSegments );
-            vertices.push_back( static_cast<float>( ii ) / numYSegments );
+            vertices.push_back( u );
+            vertices.push_back( v );
         }
     }
+
+    stbi_image_free( localBuffer );
 
     tgrVertexBufferLayout layout;
     layout.Push<float>( 3 ); // position
@@ -1398,7 +1412,16 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     // ------------------------------------------------------------------------
     // Light and Camera
     // ------------------------------------------------------------------------
-    shaderToUse->SetUniform3f( "u_LightPos", _terrainCamera.GetPosition() );
+    glm::vec3 localY, localZ, localPos;
+    GetLocalAxesAtBody( ToBody( _selectedBody ), localPos, localY, localZ );
+    localX           = glm::cross( localY, localZ );
+    glm::vec3 sunDir = glm::vec3( 0.0f ) - localPos;
+
+    glm::mat3 transform( localX, localY, localZ );
+    sunDir = sunDir * transform;
+
+    shaderToUse->SetUniform3f(
+        "u_LightPos", _terrainCamera.GetPosition() + 1000000.0f * sunDir );
     shaderToUse->SetUniform3f( "u_CameraPos", _terrainCamera.GetPosition() );
 
     // ------------------------------------------------------------------------
@@ -1692,7 +1715,7 @@ void PlanetExplorer::DrawCelestialBodies()
     {
         if ( !_planeGLMesh )
         {
-            CreatePlaneMesh( 2.0f, 2.0f, 100, 100 );
+            CreatePlaneMesh( 2.0f, 2.0f, 200, 200 );
         }
 
         auto &landShader = UpdateLandShader();
