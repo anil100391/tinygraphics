@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include "planets.h"
+#include "events/event.h"
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "renderer.h"
@@ -724,8 +725,9 @@ void PlanetExplorer::Update( float deltaTime )
 // -----------------------------------------------------------------------------
 bool PlanetExplorer::OnEvent( tgrEvent &evt )
 {
-    if ( ImGui::IsAnyItemHovered() ||
-         ImGui::IsWindowHovered( ImGuiHoveredFlags_AnyWindow ) )
+    if ( evt.GetEventType() == tgrEventType::MouseScrolled &&
+         ( ImGui::IsAnyItemHovered() ||
+           ImGui::IsWindowHovered( ImGuiHoveredFlags_AnyWindow ) ) )
     {
         return false;
     }
