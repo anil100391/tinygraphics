@@ -141,6 +141,7 @@ private:
     std::unique_ptr<tgrShader> _sunShader;
     std::unique_ptr<tgrShader> _planetShaderWithDepthMap;
     std::unique_ptr<tgrShader> _planetShader;
+    std::unique_ptr<tgrShader> _landShader;
     std::unique_ptr<tgrShader> _orbitShader;
     std::unique_ptr<tgrShader> _pointsShader;
 

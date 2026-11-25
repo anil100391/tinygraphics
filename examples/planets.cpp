@@ -3,6 +3,10 @@
 #include <filesystem>
 
 #include "planets.h"
+#include "glm/geometric.hpp"
+#include "glm/trigonometric.hpp"
+#include "renderer.h"
+#include "utils/meshgl.h"
 
 #include <glad/glad.h>
 
@@ -12,6 +16,9 @@
 #include <imgui_impl_opengl3.h>
 
 #include <tinygraphics/vertexbufferlayout.h>
+
+#include <tinygraphics/utils/mesh.h>
+#include <tinygraphics/utils/meshbufferobjects.h>
 
 #include <stb/stb_image.h>
 
@@ -996,14 +1003,45 @@ void PlanetExplorer::CreatePlaneMesh( float  w,
             vertices.push_back( y );
             vertices.push_back( terrainHeight );
 
-            // normal
             vertices.push_back( 0.0f );
             vertices.push_back( 0.0f );
             vertices.push_back( 1.0f );
 
-            // texture coordinate
-            vertices.push_back( u );
-            vertices.push_back( v );
+            // // texture coordinate
+            // vertices.push_back( u );
+            // vertices.push_back( v );
+        }
+    }
+
+    // compute normals
+    for ( size_t ii = 0u; ii < numYSegments + 1u; ++ii )
+    {
+        float y = minY + deltaY * ii;
+        for ( size_t jj = 0u; jj < numXSegments + 1u; ++jj )
+        {
+            float *normal = &vertices[( ii * numXSegments + jj ) * 6u + 3u];
+            float *v0     = &vertices[( ii * numXSegments + jj ) * 6u];
+
+            size_t i = ii;
+            size_t j = jj;
+            if ( j == numYSegments )
+                j -= 1;
+            float *v1 = &vertices[( i * numXSegments + j + 1 ) * 6u];
+
+            if ( i == numXSegments )
+                i -= 1;
+            float *v2 = &vertices[( ( i + 1 ) * numXSegments + j + 1 ) * 6u];
+
+            glm::vec3 vv0( v0[0], v0[1], v0[2] );
+            glm::vec3 vv1( v1[0], v1[1], v1[2] );
+            glm::vec3 vv2( v2[0], v2[1], v2[2] );
+
+            glm::vec3 e0 = vv1 - vv0;
+            glm::vec3 e1 = vv2 - vv0;
+            glm::vec3 n  = glm::normalize( glm::cross( e0, e1 ) );
+            normal[0]    = n.x;
+            normal[1]    = n.y;
+            normal[2]    = std::fabs( n.z );
         }
     }
 
@@ -1012,7 +1050,7 @@ void PlanetExplorer::CreatePlaneMesh( float  w,
     tgrVertexBufferLayout layout;
     layout.Push<float>( 3 ); // position
     layout.Push<float>( 3 ); // normal
-    layout.Push<float>( 2 ); // texture coordinate
+    // layout.Push<float>( 2 ); // texture coordinate
 
     std::vector<unsigned int> conn;
     conn.reserve( 3 * numXSegments * numYSegments * 2 );
@@ -1197,6 +1235,16 @@ void main()
     _pointsShader =
         std::make_unique<tgrShader>( pointsVertShader, pointsFragShader );
 
+    // Shader without texture
+    {
+        std::filesystem::path vertexShader( exeDir.string() +
+                                            "/shaders/v3n3_vert.glsl" );
+        std::filesystem::path fragmentShader( exeDir.string() +
+                                              "/shaders/v3n3_frag.glsl" );
+        _landShader =
+            std::make_unique<tgrShader>( vertexShader, fragmentShader );
+    }
+
     for ( auto ii = 0; ii < NumBodies; ++ii )
     {
         const auto           &info = PlanetsDB::GetInfo( ToBody( ii ) );
@@ -1369,12 +1417,12 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateCelestialBodiesPointShader()
 // -----------------------------------------------------------------------------
 std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
 {
-    if ( !_planetShader )
+    if ( !_landShader )
     {
         CreateShader();
     }
 
-    auto &shaderToUse = _planetShader;
+    auto &shaderToUse = _landShader;
 
     shaderToUse->Bind();
 
@@ -1383,8 +1431,8 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     // ------------------------------------------------------------------------
     shaderToUse->SetUniform1f( "u_Time", GetCurrentTime() );
 
-    _terrainCamera.SetPosition( glm::vec3( 0.0f, 0.0f, 1.0f ) );
-    _terrainCamera.SetLookAt( glm::vec3( 0.0f, 20.0f, 2.0f ) );
+    _terrainCamera.SetPosition( glm::vec3( 0.0f, 0.0f, 10.0f ) );
+    _terrainCamera.SetLookAt( glm::vec3( 0.0f, 20.0f, 12.0f ) );
     _terrainCamera.SetUpVec( glm::vec3( 0.0f, 0.0f, 1.0f ) );
 
     // Apply yaw pitch and roll now
@@ -1427,8 +1475,9 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     // ------------------------------------------------------------------------
     // MVP transforms
     // ------------------------------------------------------------------------
-    auto model =
-        glm::scale( glm::mat4( 1.0f ), glm::vec3( 200.0f, 200.0f, 200.0f ) );
+    auto model = glm::rotate( glm::mat4( 1.0f ),
+                              glm::radians( 90.0f ),
+                              glm::vec3( 1.0f, 0.0f, 0.0f ) );
     shaderToUse->SetUniformMat4f( "u_M", model );
     shaderToUse->SetUniformMat4f( "u_V", _terrainCamera.GetViewMatrix() );
 
@@ -1440,14 +1489,9 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     shaderToUse->SetUniformMat4f( "u_P", projection );
 
     // ------------------------------------------------------------------------
-    // land texture
+    // uniform color
     // ------------------------------------------------------------------------
-    auto &colorTex = _landTexture;
-    if ( colorTex )
-    {
-        colorTex->Bind( 0 );
-        shaderToUse->SetUniform1i( "u_Texture", 0 );
-    }
+    shaderToUse->SetUniform3f( "u_Color", _bodyColors[_selectedBody] );
 
     return shaderToUse;
 }
@@ -1715,7 +1759,23 @@ void PlanetExplorer::DrawCelestialBodies()
     {
         if ( !_planeGLMesh )
         {
-            CreatePlaneMesh( 2.0f, 2.0f, 200, 200 );
+            // CreatePlaneMesh( 2.0f, 2.0f, 3000, 3000 );
+            tgrMesh mesh( exeDir / "assets" / "terrain.obj" );
+            tgrMeshBufferObjects::IOParams params;
+            params.needNormals       = true;
+            params.needTextureCoords = false;
+            params.flatShading       = false;
+            tgrMeshBufferObjects::Get( mesh, params );
+
+            tgrVertexBufferLayout layout;
+            layout.Push<float>( 3 ); // position
+            if ( params.hasNormals )
+                layout.Push<float>( 3 ); // normal
+            if ( params.hasTextureCoords )
+                layout.Push<float>( 2 ); // texture coordinates
+
+            _planeGLMesh = std::make_unique<tgrMeshGL>(
+                params.vertexAttribs, layout, params.connectivity );
         }
 
         auto &landShader = UpdateLandShader();
