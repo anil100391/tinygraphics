@@ -1493,7 +1493,8 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     // ------------------------------------------------------------------------
     // uniform color
     // ------------------------------------------------------------------------
-    shaderToUse->SetUniform3f( "u_Color", _bodyColors[_selectedBody] );
+    shaderToUse->SetUniform1i( "u_Specular", 0 );
+    shaderToUse->SetUniform3f( "u_Color", 0.75f * _bodyColors[_selectedBody] );
 
     return shaderToUse;
 }

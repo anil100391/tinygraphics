@@ -6,6 +6,7 @@ in vec3 fragPos;
 uniform vec3 u_LightPos;
 uniform vec3 u_CameraPos;
 uniform vec3 u_Color;
+uniform int u_Specular;
 
 void main()
 {
@@ -22,10 +23,14 @@ void main()
     vec3 diffuse = diffuseFactor * lightColor;
 
     // SPECULAR
-    float specularStrength = 0.5;
-    vec3 viewDir = normalize(u_CameraPos - fragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    vec3 specular = specularStrength * pow(max(dot(viewDir, reflectDir), 0.0), 32) * lightColor;
+    vec3 specular = vec3(0.0); 
+    if ( u_Specular != 0 )
+    {
+        float specularStrength = 0.5;
+        vec3 viewDir = normalize(u_CameraPos - fragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        specular = specularStrength * pow(max(dot(viewDir, reflectDir), 0.0), 32) * lightColor;
+    }
 
     vec3 color = (ambient +  diffuse + specular) * u_Color;
     gl_FragColor = vec4(color, 1.0);
