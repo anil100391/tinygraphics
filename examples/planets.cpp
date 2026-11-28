@@ -1465,7 +1465,7 @@ std::unique_ptr<tgrShader> &PlanetExplorer::UpdateLandShader()
     glm::vec3 localY, localZ, localPos;
     GetLocalAxesAtBody( ToBody( _selectedBody ), localPos, localY, localZ );
     localX           = glm::cross( localY, localZ );
-    glm::vec3 sunDir = glm::vec3( 0.0f ) - localPos;
+    glm::vec3 sunDir = glm::normalize( glm::vec3( 0.0f ) - localPos );
 
     glm::mat3 transform( localX, localY, localZ );
     sunDir = sunDir * transform;
